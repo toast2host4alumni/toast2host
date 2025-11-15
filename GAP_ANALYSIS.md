@@ -91,13 +91,13 @@
 
 | ID | Requirement | Status | Implementation |
 |-----|------------|--------|----------------|
-| FR-014 | Mobile-first UI with Toast2Host yellow (#f6c000) + fonts | ✅ COMPLETE | `tailwind.config.ts` + `globals.css` with responsive design |
+| FR-014 | Mobile-first UI with Toast2Host yellow (#ffc510) + fonts | ✅ COMPLETE | `tailwind.config.ts` + `globals.css` with responsive design |
 | FR-015 | Minimal PII collection, no secrets/emails in logs | ✅ COMPLETE | Verified - no sensitive data logged |
 | FR-020 | Account deletion request (manual fulfillment in MVP) | ✅ COMPLETE | `frontend/src/app/settings/page.tsx` + PrivacyRequest content type |
 | FR-021 | Data export request (manual fulfillment in MVP) | ✅ COMPLETE | Settings page + createPrivacyRequest mutation |
 
 **Evidence**:
-- Primary color: `--color-primary: #f6c000`
+- Primary color: `--color-primary: #ffc510`
 - Mobile-first: 16px inputs (prevents iOS zoom), 44px touch targets
 - No `console.log` with sensitive data (verified via grep)
 - Privacy requests tracked with type (deletion|export) and status
