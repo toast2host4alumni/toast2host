@@ -21,3 +21,9 @@ backend/.cache/
 backend/build/
 backend/.tmp/
 
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+playwright/.auth/
+
