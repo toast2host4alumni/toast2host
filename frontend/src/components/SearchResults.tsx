@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { createConnection } from '@/lib/graphql/operations'
+import ConnectLimitNotice from './ConnectLimitNotice'
 
 type Item = {
   userId: string
@@ -16,8 +17,14 @@ export interface SearchResultsProps {
 
 export default function SearchResults({ items, onAfterConnect }: SearchResultsProps) {
   const [error, setError] = useState<string | null>(null)
+  const [limitReached, setLimitReached] = useState(false)
+
   return (
-    <ul className="divide-y">
+    <div className="space-y-4">
+      {limitReached && (
+        <ConnectLimitNotice onDismiss={() => setLimitReached(false)} />
+      )}
+      <ul className="divide-y">
       {items.map((it) => (
         <li key={it.userId} className="py-3 flex items-center justify-between">
           <div>
@@ -37,13 +44,17 @@ export default function SearchResults({ items, onAfterConnect }: SearchResultsPr
                 className="rounded-md bg-primary px-3 py-1.5 text-white text-sm"
                 onClick={async () => {
                   setError(null)
+                  setLimitReached(false)
                   try {
                     await createConnection(it.userId)
                     onAfterConnect?.()
                   } catch (e: any) {
                     const msg = e?.message || ''
-                    if (String(msg).includes('DAILY_CAP_REACHED')) setError('Daily connection limit reached')
-                    else setError('Unable to connect')
+                    if (String(msg).includes('DAILY_CAP_REACHED')) {
+                      setLimitReached(true)
+                    } else {
+                      setError('Unable to connect')
+                    }
                   }
                 }}
               >
@@ -53,7 +64,8 @@ export default function SearchResults({ items, onAfterConnect }: SearchResultsPr
           </div>
         </li>
       ))}
-      {error && <li className="py-2 text-sm text-red-600">{error}</li>}
-    </ul>
+        {error && <li className="py-2 text-sm text-red-600">{error}</li>}
+      </ul>
+    </div>
   )
 }
