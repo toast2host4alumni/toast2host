@@ -61,6 +61,7 @@ Comprehensive end-to-end tests for the Toast2Host Alumni Connect MVP.
 - pnpm (or npm/yarn)
 - Backend running on http://localhost:1337
 - Frontend running on http://localhost:3000
+- Strapi admin account created
 
 ### Installation
 
@@ -70,7 +71,28 @@ pnpm install
 
 # Install Playwright browsers
 pnpm test:install
+
+# Configure test environment
+cp .env.test.example .env.test
+# Edit .env.test with your credentials
 ```
+
+### Environment Configuration
+
+Create a `.env.test` file with:
+
+```bash
+STRAPI_URL=http://localhost:1337
+BASE_URL=http://localhost:3000
+STRAPI_ADMIN_EMAIL=admin@example.com
+STRAPI_ADMIN_PASSWORD=YourAdminPassword
+```
+
+**Important**: The test helpers use Strapi's local authentication to bypass Google OAuth. This means:
+- ✅ Tests create real users via `/api/auth/local/register`
+- ✅ JWT tokens are stored in localStorage as `t2h_token`
+- ✅ Tests work without Google OAuth configuration
+- ⚠️ Tests require Strapi to be running and accessible
 
 ### Running Tests
 

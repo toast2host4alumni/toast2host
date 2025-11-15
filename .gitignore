@@ -9,6 +9,7 @@ coverage/
 # Env
 .env
 .env.*
+!.env.test.example
 frontend/.env.local
 backend/.env
 
