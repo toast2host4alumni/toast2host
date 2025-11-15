@@ -7,8 +7,7 @@ export default function Footer() {
         <span>© {new Date().getFullYear()} Toast2Host</span>
         <nav className="flex gap-4">
           <Link href="/">Home</Link>
-          <Link href="/(marketing)/legal/terms">Terms</Link>
-          <Link href="/(marketing)/legal/privacy">Privacy</Link>
+          <Link href="/settings">Settings</Link>
         </nav>
       </div>
     </footer>

@@ -4,8 +4,17 @@ import Providers from './providers'
 import Footer from '@/components/Footer'
 
 export const metadata = {
-  title: 'Toast2Host',
-  description: 'Find and connect with alumni',
+  title: 'Toast2Host - Alumni Connect',
+  description: 'Find and connect with university alumni in your area',
+  keywords: 'alumni, networking, university, connections',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#ffc510',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

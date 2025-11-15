@@ -1,4 +1,5 @@
 export default [
+  'global::request-id',
   'strapi::errors',
   {
     name: 'strapi::security',

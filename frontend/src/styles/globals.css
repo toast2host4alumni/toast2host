@@ -1,12 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* TODO: Replace with exact brand values from toast2host.net */
-  --color-primary: #f6c000;
+  --color-primary: #ffc510;
   --color-primary-foreground: #111111;
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, sans-serif;
+  --font-sans: Figtree, sans-serif;
 }
 
 html, body, #__next {
@@ -15,5 +16,61 @@ html, body, #__next {
 
 body {
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile-first responsive typography */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+}
+
+/* Improved form inputs for mobile */
+input, select, textarea {
+  font-size: 16px; /* Prevents zoom on iOS */
+  line-height: 1.5;
+}
+
+/* Better touch targets for mobile */
+button, a {
+  min-height: 44px; /* iOS recommended touch target */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Safe area for mobile devices with notches */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Focus states for accessibility */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 

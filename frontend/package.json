@@ -9,32 +9,32 @@
     "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
-    "next": "^14.2.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@tanstack/react-query": "^5.45.0",
-    "react-hook-form": "^7.51.0",
-    "@hookform/resolvers": "^3.4.0",
-    "zod": "^3.23.0",
-    "urql": "^4.0.6",
-    "graphql": "^16.8.1",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.3.0",
+    "@hookform/resolvers": "^5.2.2",
+    "@tanstack/react-query": "^5.90.9",
     "class-variance-authority": "^0.7.0",
-    "lucide-react": "^0.453.0"
+    "clsx": "^2.1.1",
+    "graphql": "^16.12.0",
+    "lucide-react": "^0.553.0",
+    "next": "^16.0.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.66.0",
+    "tailwind-merge": "^3.4.0",
+    "urql": "^5.0.1",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@types/node": "^20.11.30",
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.3",
-    "typescript": "^5.4.0",
-    "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/typescript": "^4.0.5",
-    "@graphql-codegen/typescript-operations": "^4.3.0",
-    "@graphql-codegen/typescript-urql": "^4.0.0"
+    "@graphql-codegen/cli": "^6.0.2",
+    "@graphql-codegen/typescript": "^5.0.4",
+    "@graphql-codegen/typescript-operations": "^5.0.4",
+    "@graphql-codegen/typescript-urql": "^4.0.1",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.9.3"
   }
 }
-

@@ -9,6 +9,7 @@ coverage/
 # Env
 .env
 .env.*
+!.env.test.example
 frontend/.env.local
 backend/.env
 
@@ -20,4 +21,10 @@ out/
 backend/.cache/
 backend/build/
 backend/.tmp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+playwright/.auth/
 

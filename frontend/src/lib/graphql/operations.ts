@@ -3,6 +3,50 @@ import type { ProfileInput } from '@/lib/validation/profile'
 
 export type UpdateMyProfileInput = ProfileInput
 
+const ME_QUERY = `
+  query Me {
+    me {
+      id
+      email
+      profile {
+        id
+        university_name
+        linkedin_url
+        location_text
+        location_lat
+        location_lng
+        location_scope
+        batch_year
+        updated_at
+      }
+    }
+  }
+` as const
+
+export async function getMe() {
+  const res = await graphqlClient
+    .query<{
+      me: {
+        id: string
+        email: string
+        profile: {
+          id: string
+          university_name: string
+          linkedin_url: string
+          location_text: string
+          location_lat?: number
+          location_lng?: number
+          location_scope?: string
+          batch_year?: number
+          updated_at: string
+        } | null
+      }
+    }>(ME_QUERY, {})
+    .toPromise()
+  if (res.error) throw res.error
+  return res.data?.me ?? null
+}
+
 const UPDATE_MY_PROFILE = `
   mutation UpdateMyProfile($input: UpdateProfileInput!) {
     updateMyProfile(input: $input) {
