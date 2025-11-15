@@ -36,16 +36,21 @@ const connectionResolvers = {
       const targetId = Number(args.targetUserId)
       if (!targetId || targetId === user.id) throw new Error('Invalid target')
 
-      // Prevent duplicate
+      // Prevent duplicate connections for same pair (check both directions)
       const existing = await strapi.entityService.findMany('api::connection.connection', {
         filters: {
-          actor_user: user.id,
-          target_user: targetId,
+          $or: [
+            { actor_user: user.id, target_user: targetId },
+            { actor_user: targetId, target_user: user.id },
+          ],
         },
         page: 1,
         pageSize: 1,
       })
-      if (Array.isArray(existing) && existing[0]) return { id: String(existing[0].id), status: existing[0].status }
+      if (Array.isArray(existing) && existing[0]) {
+        // Return existing connection regardless of direction
+        return { id: String(existing[0].id), status: existing[0].status }
+      }
 
       // Daily cap enforcement
       const custom = strapi.config.get('custom') as any
