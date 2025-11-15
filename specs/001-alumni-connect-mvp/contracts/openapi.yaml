@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Toast2Host MVP API
+  version: 0.1.0
+  description: Minimal contracts for search and connection flows (Strapi-backed)
+servers:
+  - url: https://api.toast2host.local
+    description: Dev server (placeholder)
+paths:
+  /api/me:
+    get:
+      summary: Get current user's profile
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+    patch:
+      summary: Update current user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileInput'
+      responses:
+        '200':
+          description: Updated
+
+  /api/search:
+    get:
+      summary: Search users by location and filters
+      parameters:
+        - in: query
+          name: location
+          schema:
+            type: string
+          description: Free-text (city/state/country)
+        - in: query
+          name: lat
+          schema:
+            type: number
+        - in: query
+          name: lng
+          schema:
+            type: number
+        - in: query
+          name: scope
+          schema:
+            type: string
+            enum: [city, state, country]
+        - in: query
+          name: university
+          schema:
+            type: string
+        - in: query
+          name: batch_year
+          schema:
+            type: integer
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [proximity, recent, name]
+          description: Sort order; defaults to proximity when lat/lng provided, otherwise recent
+        - in: query
+          name: not_connected_only
+          schema:
+            type: boolean
+          description: If true, only include users with no existing connection to the actor
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Case-insensitive name contains filter
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+
+  /api/connections:
+    post:
+      summary: Create a connection request (or connect immediately if consent disabled)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetUserId:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+
+  /api/connections/{id}/approve:
+    post:
+      summary: Approve a pending connection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+
+  /api/connections/{id}/reject:
+    post:
+      summary: Reject a pending connection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+
+  /api/privacy-requests:
+    post:
+      summary: Create a privacy request (deletion or export)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivacyRequestInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyRequest'
+
+  /metrics:
+    get:
+      summary: Basic metrics (request count, latency p50/p95, error rate)
+      responses:
+        '200':
+          description: Metrics JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+components:
+  schemas:
+    MeResponse:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+
+    UserProfileInput:
+      type: object
+      properties:
+        university_name:
+          type: string
+        linkedin_url:
+          type: string
+        location_text:
+          type: string
+        location_lat:
+          type: number
+        location_lng:
+          type: number
+        location_scope:
+          type: string
+          enum: [city, state, country]
+        batch_year:
+          type: integer
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/UserProfileInput'
+        - type: object
+          properties:
+            id:
+              type: string
+
+    SearchResult:
+      type: object
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        university:
+          type: string
+        location:
+          type: string
+        isConnected:
+          type: boolean
+        connectionStatus:
+          type: string
+          enum: [none, pending, connected]
+
+    Connection:
+      type: object
+      properties:
+        id:
+          type: string
+        actor_user_id:
+          type: string
+        target_user_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, connected, rejected]
+        created_at:
+          type: string
+          format: date-time
+    PrivacyRequestInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [deletion, export]
+    PrivacyRequest:
+      allOf:
+        - $ref: '#/components/schemas/PrivacyRequestInput'
+        - type: object
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+              enum: [open, completed]
+            created_at:
+              type: string
+              format: date-time
+            completed_at:
+              type: string
+              format: date-time

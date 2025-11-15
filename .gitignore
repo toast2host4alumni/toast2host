@@ -1,0 +1,30 @@
+# Node / TypeScript
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+
+# Env
+.env
+.env.*
+!.env.test.example
+frontend/.env.local
+backend/.env
+
+# Next.js
+.next/
+out/
+
+# Strapi
+backend/.cache/
+backend/build/
+backend/.tmp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+playwright/.auth/
+

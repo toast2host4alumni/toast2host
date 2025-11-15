@@ -1,0 +1,84 @@
+# GraphQL Operations — Toast2Host MVP (Strapi GraphQL)
+
+# Query current user and profile
+query Me {
+  me {
+    id
+    email
+    profile {
+      id
+      university_name
+      linkedin_url
+      location_text
+      location_lat
+      location_lng
+      location_scope
+      batch_year
+      updated_at
+    }
+  }
+}
+
+# Update current user's profile
+mutation UpdateMyProfile($input: UpdateProfileInput!) {
+  updateMyProfile(input: $input) {
+    profile { id university_name linkedin_url location_text batch_year updated_at }
+  }
+}
+
+# List US universities (proxied)
+query UniversitiesUS($q: String) {
+  universitiesUS(q: $q) { name state country external_id }
+}
+
+# Search users by location and filters
+query SearchUsers($location: String, $lat: Float, $lng: Float, $scope: LocationScope, $university: String, $batch_year: Int, $sort: SearchSort, $not_connected_only: Boolean, $name: String, $page: Int, $pageSize: Int) {
+  searchUsers(
+    location: $location
+    lat: $lat
+    lng: $lng
+    scope: $scope
+    university: $university
+    batch_year: $batch_year
+    sort: $sort
+    not_connected_only: $not_connected_only
+    name: $name
+    page: $page
+    pageSize: $pageSize
+  ) {
+    userId
+    name
+    university
+    location
+    connectionStatus
+    email
+  }
+}
+
+# Create/Approve/Reject connection
+mutation CreateConnection($targetUserId: ID!) {
+  createConnection(targetUserId: $targetUserId) { id status }
+}
+
+mutation ApproveConnection($id: ID!) {
+  approveConnection(id: $id) { id status }
+}
+
+mutation RejectConnection($id: ID!) {
+  rejectConnection(id: $id) { id status }
+}
+
+# Privacy request (export/deletion)
+mutation CreatePrivacyRequest($type: PrivacyRequestType!) {
+  createPrivacyRequest(type: $type) { id type status created_at }
+}
+
+# Pending requests for current user
+query MyPendingConnections {
+  myPendingConnections { id actorUserId created_at }
+}
+
+# List my privacy requests
+query MyPrivacyRequests {
+  myPrivacyRequests { id type status created_at completed_at }
+}

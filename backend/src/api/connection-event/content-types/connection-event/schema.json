@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "connection_events",
+  "info": {
+    "singularName": "connection-event",
+    "pluralName": "connection-events",
+    "displayName": "Connection Event"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "connection": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::connection.connection"
+    },
+    "actor_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "target_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["requested", "approved", "rejected", "revealed"],
+      "required": true
+    },
+    "context": { "type": "string" }
+  }
+}
+
