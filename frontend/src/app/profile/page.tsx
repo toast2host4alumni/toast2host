@@ -32,7 +32,9 @@ export default function ProfilePage() {
           setValue('location_text', p.location_text)
           setValue('location_lat', p.location_lat)
           setValue('location_lng', p.location_lng)
-          setValue('location_scope', p.location_scope)
+          if (p.location_scope && ['city', 'state', 'country'].includes(p.location_scope)) {
+            setValue('location_scope', p.location_scope as 'city' | 'state' | 'country')
+          }
           if (p.batch_year) setValue('batch_year', p.batch_year)
         }
       } catch (err) {

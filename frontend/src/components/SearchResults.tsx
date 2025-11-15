@@ -8,6 +8,7 @@ type Item = {
   university?: string | null
   location?: string | null
   connectionStatus: 'none' | 'pending' | 'connected' | string
+  email?: string | null
 }
 
 export interface SearchResultsProps {
@@ -30,8 +31,8 @@ export default function SearchResults({ items, onAfterConnect }: SearchResultsPr
           <div>
             <div className="font-medium">{it.name}</div>
             <div className="text-sm text-gray-600">{it.university} • {it.location}</div>
-            {it.connectionStatus === 'connected' && it['email'] && (
-              <div className="text-sm text-gray-800">Email: {String((it as any).email)}</div>
+            {it.connectionStatus === 'connected' && it.email && (
+              <div className="text-sm text-gray-800">Email: {it.email}</div>
             )}
           </div>
           <div>

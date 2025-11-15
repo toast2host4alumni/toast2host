@@ -1,7 +1,8 @@
 import { randomUUID } from 'crypto';
+import type { Context, Next } from 'koa';
 
-export default (config, { strapi }) => {
-  return async (ctx, next) => {
+export default (config: any, { strapi }: { strapi: any }) => {
+  return async (ctx: Context, next: Next) => {
     // Generate or extract request ID
     const requestId = ctx.request.headers['x-request-id'] || randomUUID();
 
@@ -45,11 +46,12 @@ export default (config, { strapi }) => {
     } catch (error) {
       // Log error with request ID
       const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : String(error);
       strapi.log.error('Request failed', {
         requestId,
         method: ctx.method,
         url: ctx.url,
-        error: error.message,
+        error: errorMessage,
         duration,
       });
       throw error;
