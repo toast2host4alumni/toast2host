@@ -1,0 +1,23 @@
+{
+  "kind": "collectionType",
+  "collectionName": "subscriptions",
+  "info": {
+    "singularName": "subscription",
+    "pluralName": "subscriptions",
+    "displayName": "Subscription"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "plan_tier": { "type": "string", "default": "free" },
+    "source": { "type": "enumeration", "enum": ["manual", "usage_rule"], "default": "manual" },
+    "starts_at": { "type": "datetime" },
+    "ends_at": { "type": "datetime" },
+    "active": { "type": "boolean", "default": true }
+  }
+}
+

@@ -1,0 +1,21 @@
+{
+  "kind": "collectionType",
+  "collectionName": "privacy_requests",
+  "info": {
+    "singularName": "privacy-request",
+    "pluralName": "privacy-requests",
+    "displayName": "Privacy Request"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "type": { "type": "enumeration", "enum": ["deletion", "export"], "required": true },
+    "status": { "type": "enumeration", "enum": ["open", "completed"], "default": "open" },
+    "completed_at": { "type": "datetime" }
+  }
+}
+

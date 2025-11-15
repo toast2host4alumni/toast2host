@@ -1,0 +1,23 @@
+# Node / TypeScript
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+
+# Env
+.env
+.env.*
+frontend/.env.local
+backend/.env
+
+# Next.js
+.next/
+out/
+
+# Strapi
+backend/.cache/
+backend/build/
+backend/.tmp/
+
