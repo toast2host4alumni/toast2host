@@ -6,21 +6,24 @@ coverage/
 *.log
 .DS_Store
 
+# Turborepo
+.turbo/
+
 # Env
 .env
 .env.*
 !.env.test.example
-frontend/.env.local
-backend/.env
+apps/frontend/.env.local
+apps/backend/.env
 
 # Next.js
 .next/
 out/
 
 # Strapi
-backend/.cache/
-backend/build/
-backend/.tmp/
+apps/backend/.cache/
+apps/backend/build/
+apps/backend/.tmp/
 
 # Playwright
 /test-results/
@@ -28,3 +31,12 @@ backend/.tmp/
 /playwright/.cache/
 playwright/.auth/
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

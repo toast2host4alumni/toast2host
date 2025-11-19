@@ -33,7 +33,6 @@ npm run develop
 5. Application type: **Web application**
 6. Authorized redirect URIs:
    - `http://localhost:1337/api/connect/google/callback`
-   - `http://localhost:3000/auth/callback`
 7. Copy **Client ID** and **Client Secret**
 
 **Configure in Strapi:**

@@ -1,0 +1,90 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/infrastructure/**'
+      - '.github/workflows/deploy-infrastructure.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - staging
+          - dev
+
+env:
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+
+jobs:
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'prod' }}
+
+    outputs:
+      backendUrl: ${{ steps.deploy.outputs.backendUrl }}
+      frontendUrl: ${{ steps.deploy.outputs.frontendUrl }}
+      staticWebAppToken: ${{ steps.deploy.outputs.staticWebAppDeploymentToken }}
+      backendAppName: ${{ steps.deploy.outputs.backendAppName }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az group create \
+              --name ${{ env.AZURE_RESOURCE_GROUP }} \
+              --location ${{ vars.AZURE_LOCATION || 'eastus' }} \
+              --tags environment=${{ inputs.environment || 'prod' }} project=toast2host
+
+      - name: Deploy Bicep
+        id: deploy
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ./packages/infrastructure/main.bicep
+          parameters: >
+            ./packages/infrastructure/parameters.${{ inputs.environment || 'prod' }}.json
+            dbAdminPassword=${{ secrets.DB_ADMIN_PASSWORD }}
+            jwtSecret=${{ secrets.JWT_SECRET }}
+            adminJwtSecret=${{ secrets.ADMIN_JWT_SECRET }}
+            appKeys=${{ secrets.APP_KEYS }}
+            apiTokenSalt=${{ secrets.API_TOKEN_SALT }}
+            transferTokenSalt=${{ secrets.TRANSFER_TOKEN_SALT }}
+            googleClientId=${{ secrets.GOOGLE_CLIENT_ID }}
+            googleClientSecret=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            googleMapsApiKey=${{ secrets.GOOGLE_MAPS_API_KEY }}
+            repositoryUrl=${{ github.server_url }}/${{ github.repository }}
+          failOnStdErr: false
+
+      - name: Output Deployment Info
+        run: |
+          echo "## Infrastructure Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend URL: ${{ steps.deploy.outputs.backendUrl }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend URL: ${{ steps.deploy.outputs.frontendUrl }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Database FQDN: ${{ steps.deploy.outputs.databaseFqdn }}" >> $GITHUB_STEP_SUMMARY
+
+  save-deployment-token:
+    needs: deploy-infrastructure
+    runs-on: ubuntu-latest
+    if: ${{ needs.deploy-infrastructure.outputs.staticWebAppToken != '' }}
+    steps:
+      - name: Save Static Web App Token
+        run: |
+          echo "::notice::Static Web App deployment token has been generated."
+          echo "Add this token as AZURE_STATIC_WEB_APP_TOKEN secret in your repository settings."
+          echo "Token (first 20 chars): ${TOKEN:0:20}..."
+        env:
+          TOKEN: ${{ needs.deploy-infrastructure.outputs.staticWebAppToken }}

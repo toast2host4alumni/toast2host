@@ -1,0 +1,10 @@
+{
+  "name": "@t2h/infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "validate": "az bicep build --file main.bicep --stdout > /dev/null",
+    "lint": "az bicep lint --file main.bicep",
+    "what-if": "az deployment group what-if --resource-group $AZURE_RESOURCE_GROUP --template-file main.bicep --parameters parameters.prod.json"
+  }
+}

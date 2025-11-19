@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "globalHeaders": {
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+  },
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/_next/*",
+      "/images/*",
+      "/*.ico",
+      "/*.png",
+      "/*.jpg",
+      "/*.svg"
+    ]
+  },
+  "routes": [
+    {
+      "route": "/signin",
+      "rewrite": "/signin"
+    },
+    {
+      "route": "/auth/*",
+      "rewrite": "/auth/*"
+    },
+    {
+      "route": "/onboarding",
+      "rewrite": "/onboarding"
+    },
+    {
+      "route": "/search",
+      "rewrite": "/search"
+    },
+    {
+      "route": "/requests",
+      "rewrite": "/requests"
+    },
+    {
+      "route": "/profile",
+      "rewrite": "/profile"
+    },
+    {
+      "route": "/settings",
+      "rewrite": "/settings"
+    }
+  ],
+  "responseOverrides": {
+    "401": {
+      "statusCode": 302,
+      "redirect": "/signin"
+    },
+    "404": {
+      "rewrite": "/404.html"
+    }
+  },
+  "platform": {
+    "apiRuntime": "node:18"
+  }
+}

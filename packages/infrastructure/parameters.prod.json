@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "prod"
+    },
+    "baseName": {
+      "value": "t2h"
+    },
+    "location": {
+      "value": "eastus"
+    },
+    "dbAdminUsername": {
+      "value": "strapiuser"
+    },
+    "dailyConnectCap": {
+      "value": 10
+    },
+    "consentRequired": {
+      "value": true
+    },
+    "repositoryUrl": {
+      "value": ""
+    }
+  }
+}

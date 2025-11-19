@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_profiles",
+  "info": {
+    "singularName": "user-profile",
+    "pluralName": "user-profiles",
+    "displayName": "User Profile"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "first_name": { "type": "string" },
+    "last_name": { "type": "string" },
+    "profile_photo_url": { "type": "string" },
+    "university_name": { "type": "string" },
+    "university_external_id": { "type": "string" },
+    "linkedin_url": { "type": "string" },
+    "location_text": { "type": "string" },
+    "location_lat": { "type": "decimal" },
+    "location_lng": { "type": "decimal" },
+    "location_scope": { "type": "enumeration", "enum": ["city", "state", "country"] },
+    "batch_year": { "type": "integer" },
+    "onboarding_completed": { "type": "boolean", "default": false }
+  }
+}
+

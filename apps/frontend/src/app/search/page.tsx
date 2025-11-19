@@ -1,0 +1,316 @@
+'use client'
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import SearchResults from '@/components/SearchResults'
+import { useSearch } from '@/hooks/useSearch'
+import AuthGuard from '@/components/AuthGuard'
+import LocationCombobox, { type LocationValue } from '@/components/LocationCombobox'
+import UniversityCombobox from '@/components/UniversityCombobox'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+
+function SearchContent() {
+  const { data: user } = useCurrentUser()
+  const [searchMode, setSearchMode] = useState<'all' | 'same_university' | 'same_batch'>('all')
+  const [locationValue, setLocationValue] = useState<LocationValue>({
+    location_text: '',
+    location_lat: undefined,
+    location_lng: undefined,
+    location_scope: 'city',
+  })
+  const [university, setUniversity] = useState<string>('')
+  const [batchYear, setBatchYear] = useState<number | undefined>(undefined)
+  const [sort, setSort] = useState<'proximity' | 'recent' | 'name'>('recent')
+  const [notConnectedOnly, setNotConnectedOnly] = useState(false)
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
+
+  // Auto-set filters based on search mode
+  useEffect(() => {
+    if (!user?.profile) return
+
+    if (searchMode === 'same_university') {
+      setUniversity(user.profile.university_name || '')
+      setBatchYear(undefined)
+    } else if (searchMode === 'same_batch') {
+      setUniversity(user.profile.university_name || '')
+      setBatchYear(user.profile.batch_year || undefined)
+    } else if (searchMode === 'all') {
+      // Clear university and batch filters when "All Universities" is selected
+      setUniversity('')
+      setBatchYear(undefined)
+    }
+  }, [searchMode, user])
+
+  const onLocationChange = useCallback((v: LocationValue) => {
+    setLocationValue(v)
+  }, [])
+
+  const onUniversityChange = useCallback((name: string) => {
+    setUniversity(name)
+  }, [])
+
+  const params = useMemo(() => ({
+    location: locationValue.location_text || undefined,
+    lat: locationValue.location_lat,
+    lng: locationValue.location_lng,
+    scope: locationValue.location_scope || 'city',
+    university: university || undefined,
+    batch_year: batchYear,
+    sort,
+    not_connected_only: notConnectedOnly || undefined,
+  }), [locationValue, university, batchYear, sort, notConnectedOnly])
+
+  const { data, fetchNextPage, hasNextPage, isFetching, refetch } = useSearch(params, 20)
+
+  const items = (data?.pages ?? []).flatMap((p) => p.items)
+
+  return (
+    <main className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="text-left">
+        <h1 className="text-4xl font-black text-gray-900">Find Alumni</h1>
+        <p className="text-gray-600 mt-2">Connect with alumni from universities around the world</p>
+      </div>
+
+      {/* Results */}
+      <div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[500px]">
+          {/* Search Filters - Always visible */}
+          <div className="mb-6 pb-4 border-b border-gray-200 space-y-4">
+            {/* Search Mode Selector */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setSearchMode('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  searchMode === 'all'
+                    ? 'bg-primary text-black shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Across All Universities
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchMode('same_university')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  searchMode === 'same_university'
+                    ? 'bg-primary text-black shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                From Same Alma Mater
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchMode('same_batch')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  searchMode === 'same_batch'
+                    ? 'bg-primary text-black shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                From Same Batch
+              </button>
+            </div>
+
+            {/* Row 1: Location, University */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <LocationCombobox value={locationValue} onChange={onLocationChange} />
+              <UniversityCombobox value={university} onChange={onUniversityChange} />
+            </div>
+
+            {/* Mobile: Stacked filters */}
+            <div className="block md:hidden space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Batch Year</label>
+                  <input
+                    type="number"
+                    className="w-full text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-2 px-3"
+                    value={batchYear ?? ''}
+                    onChange={(e) => setBatchYear(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="Any"
+                    min={1900}
+                    max={2100}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Sort by</label>
+                  <select
+                    className="w-full text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-2"
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as any)}
+                  >
+                    <option value="recent">Recent</option>
+                    <option value="proximity">Proximity</option>
+                    <option value="name">Name A-Z</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setNotConnectedOnly(!notConnectedOnly)}
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
+              >
+                <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
+                  notConnectedOnly
+                    ? 'bg-primary border-primary'
+                    : 'bg-white border-gray-300 group-hover:border-gray-400'
+                }`}>
+                  {notConnectedOnly && (
+                    <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </span>
+                <span>Hide existing connections</span>
+              </button>
+
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <p className="text-sm text-gray-600 font-medium">
+                  Found <span className="text-primary font-bold">{items.length}</span> alumni
+                </p>
+                {isFetching && (
+                  <svg className="animate-spin h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop: Row 2 - Batch Year, Hide Connections (left) | Found count (center) | Sort, View Toggle (right) */}
+            <div className="hidden md:flex flex-wrap items-center justify-between gap-4">
+              {/* Left: Batch Year + Hide Connections */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-600">Batch Year:</label>
+                  <input
+                    type="number"
+                    className="w-24 text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-1.5 px-2"
+                    value={batchYear ?? ''}
+                    onChange={(e) => setBatchYear(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="Any"
+                    min={1900}
+                    max={2100}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setNotConnectedOnly(!notConnectedOnly)}
+                  className="inline-flex items-center gap-3 text-sm font-medium text-gray-600 cursor-pointer select-none whitespace-nowrap hover:text-gray-900 transition-colors group"
+                >
+                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
+                    notConnectedOnly
+                      ? 'bg-primary border-primary'
+                      : 'bg-white border-gray-300 group-hover:border-gray-400'
+                  }`}>
+                    {notConnectedOnly && (
+                      <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </span>
+                  <span>Hide existing connections</span>
+                </button>
+              </div>
+
+              {/* Center: Found count */}
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-600 font-medium">
+                  Found <span className="text-primary font-bold">{items.length}</span> alumni
+                </p>
+                {isFetching && (
+                  <svg className="animate-spin h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+              </div>
+
+              {/* Right: Sort + View Toggle */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-600">Sort by:</label>
+                  <select
+                    className="text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-1.5"
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as any)}
+                  >
+                    <option value="recent">Recently Updated</option>
+                    <option value="proximity">Proximity</option>
+                    <option value="name">Name A-Z</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setViewMode('card')}
+                    className={`p-2 rounded-md transition-colors ${viewMode === 'card' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="Card View"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="List View"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {isFetching && items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <svg className="animate-spin h-10 w-10 text-primary mb-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="font-medium">Searching for alumni...</p>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-lg font-semibold text-gray-700 mb-1">No results found</p>
+              <p className="text-sm">Try adjusting your filters or search criteria</p>
+            </div>
+          ) : (
+            <>
+              <SearchResults items={items} onAfterConnect={() => refetch()} viewMode={viewMode} />
+              {hasNextPage && (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetching}
+                    className="bg-white text-gray-900 font-semibold px-8 py-3 rounded-xl border-2 border-gray-200 hover:border-primary transition-all disabled:opacity-50"
+                  >
+                    {isFetching ? 'Loading...' : 'Load more results'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </main>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <AuthGuard>
+      <SearchContent />
+    </AuthGuard>
+  )
+}
