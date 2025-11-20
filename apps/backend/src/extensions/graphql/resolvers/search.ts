@@ -4,6 +4,7 @@ type Args = {
   lng?: number | null
   scope?: 'city' | 'state' | 'country' | null
   university?: string | null
+  universities?: string[] | null
   batch_year?: number | null
   sort?: 'proximity' | 'recent' | 'name' | null
   not_connected_only?: boolean | null
@@ -44,7 +45,15 @@ const searchResolvers = {
         filters.user = { $ne: actorId }
       }
 
-      if (args.university) filters.university_name = { $eqi: args.university }
+      // Handle university filters - support both single and multiple universities
+      if (args.universities && args.universities.length > 0) {
+        // Multiple universities - use $or with case-insensitive matching
+        filters.$or = args.universities.map(uni => ({ university_name: { $eqi: uni } }))
+      } else if (args.university) {
+        // Single university for backwards compatibility
+        filters.university_name = { $eqi: args.university }
+      }
+
       if (args.batch_year) filters.batch_year = { $eq: args.batch_year }
 
       // Location filters
@@ -125,6 +134,13 @@ const searchResolvers = {
         const uid = p.user?.id
         const status = uid ? connectionMap.get(uid) || 'none' : 'none'
         const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.user?.username || 'Unknown'
+
+        // Calculate proximity if coordinates are available
+        let proximityMiles: number | null = null
+        if (lat && lng && typeof p.location_lat === 'number' && typeof p.location_lng === 'number') {
+          proximityMiles = p._dist !== undefined ? p._dist : haversine(lat, lng, p.location_lat, p.location_lng)
+        }
+
         return {
           userId: String(uid || ''),
           name: fullName,
@@ -134,6 +150,7 @@ const searchResolvers = {
           email: status === 'connected' ? p.user?.email || null : null,
           profilePhotoUrl: p.profile_photo_url || null,
           batchYear: p.batch_year || null,
+          proximityMiles: proximityMiles,
         }
       })
 

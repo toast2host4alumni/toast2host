@@ -50,15 +50,10 @@ export default function LinkedInInput({ value = '', onChange, error }: LinkedInI
     normalized = normalized.replace(/^www\./i, '')
 
     // Remove linkedin.com if present
-    normalized = normalized.replace(/^linkedin\.com/i, '')
+    normalized = normalized.replace(/^linkedin\.com\/?/i, '')
 
-    // Ensure it starts with /
-    if (!normalized.startsWith('/')) {
-      normalized = '/' + normalized
-    }
-
-    // If it's just "/" or empty after normalization, return empty
-    if (normalized === '/' || normalized.trim() === '') {
+    // If empty after normalization, return empty
+    if (normalized.trim() === '') {
       return ''
     }
 
@@ -96,9 +91,9 @@ export default function LinkedInInput({ value = '', onChange, error }: LinkedInI
 
       <div className="relative">
         {/* Prefix label */}
-        <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-          <span className="bg-gray-100 text-gray-600 text-sm px-3 h-full flex items-center rounded-l-lg border-2 border-r-0 border-gray-300">
-            https://linkedin.com
+        <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-10 pl-3">
+          <span className="text-gray-600 text-sm">
+            https://linkedin.com/
           </span>
         </div>
 
@@ -109,8 +104,9 @@ export default function LinkedInInput({ value = '', onChange, error }: LinkedInI
           onChange={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={handleBlur}
-          placeholder="/in/username"
-          className="w-full pl-[165px] pr-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          placeholder="in/username"
+          className="w-full pr-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          style={{ paddingLeft: '140px' }}
         />
       </div>
 

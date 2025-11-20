@@ -5,8 +5,8 @@ import { graphqlClient } from '@/lib/graphql/client'
 import type { SearchParams } from '@/lib/validation/search'
 
 const SEARCH_USERS = `
-  query SearchUsers($location: String, $lat: Float, $lng: Float, $scope: LocationScope, $university: String, $batch_year: Int, $sort: SearchSort, $not_connected_only: Boolean, $name: String, $page: Int, $pageSize: Int) {
-    searchUsers(location: $location, lat: $lat, lng: $lng, scope: $scope, university: $university, batch_year: $batch_year, sort: $sort, not_connected_only: $not_connected_only, name: $name, page: $page, pageSize: $pageSize) {
+  query SearchUsers($location: String, $lat: Float, $lng: Float, $scope: LocationScope, $university: String, $universities: [String!], $batch_year: Int, $sort: SearchSort, $not_connected_only: Boolean, $name: String, $page: Int, $pageSize: Int) {
+    searchUsers(location: $location, lat: $lat, lng: $lng, scope: $scope, university: $university, universities: $universities, batch_year: $batch_year, sort: $sort, not_connected_only: $not_connected_only, name: $name, page: $page, pageSize: $pageSize) {
       userId
       name
       university
@@ -15,6 +15,7 @@ const SEARCH_USERS = `
       email
       profilePhotoUrl
       batchYear
+      proximityMiles
     }
   }
 ` as const

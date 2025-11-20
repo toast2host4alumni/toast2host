@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   reactStrictMode: true,
-  typedRoutes: true,
+  typedRoutes: false,
   async headers() {
     return [
       {

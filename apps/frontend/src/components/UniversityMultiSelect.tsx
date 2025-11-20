@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { Check, ChevronsUpDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -27,13 +27,13 @@ const UNIVERSITIES_US = `
   }
 ` as const
 
-export interface UniversityComboboxProps {
-  value?: string
-  onChange: (name: string) => void
+export interface UniversityMultiSelectProps {
+  value?: string[]
+  onChange: (names: string[]) => void
   label?: string
 }
 
-export default function UniversityCombobox({ value, onChange, label = 'University' }: UniversityComboboxProps) {
+export default function UniversityMultiSelect({ value = [], onChange, label = 'Universities' }: UniversityMultiSelectProps) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState('')
   const [universities, setUniversities] = React.useState<University[]>([])
@@ -64,6 +64,19 @@ export default function UniversityCombobox({ value, onChange, label = 'Universit
     }
   }, [search])
 
+  const handleSelect = (universityName: string) => {
+    if (value.includes(universityName)) {
+      onChange(value.filter(v => v !== universityName))
+    } else {
+      onChange([...value, universityName])
+    }
+  }
+
+  const handleRemove = (universityName: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    onChange(value.filter(v => v !== universityName))
+  }
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-semibold text-gray-700">{label}</label>
@@ -74,18 +87,43 @@ export default function UniversityCombobox({ value, onChange, label = 'Universit
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-start text-left font-normal gap-0 h-[50px] px-4 border-2 border-gray-200 hover:border-gray-300 text-base"
+              className="w-full justify-start text-left font-normal gap-0 min-h-[50px] h-auto px-4 py-2 border-2 border-gray-200 hover:border-gray-300 text-base"
             >
-              <span className={`flex-1 truncate text-left text-base ${value ? 'text-gray-900' : 'text-gray-400'}`}>
-                {value || "Select university..."}
-              </span>
-              {!value && <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 ml-auto" />}
+              <div className="flex-1 flex flex-wrap gap-2 py-1">
+                {value.length === 0 ? (
+                  <span className="text-gray-400">Select universities...</span>
+                ) : (
+                  value.map(uni => {
+                    // Extract just the university name before any parentheses or extra info
+                    const shortName = uni.split('(')[0].trim() || uni
+                    // Truncate if still too long
+                    const displayName = shortName.length > 40 ? shortName.substring(0, 37) + '...' : shortName
+
+                    return (
+                      <span
+                        key={uni}
+                        className="inline-flex items-center gap-1 bg-primary/10 text-black px-2 py-1 rounded-md text-sm font-medium max-w-xs"
+                        title={uni}
+                      >
+                        <span className="truncate">{displayName}</span>
+                        <button
+                          onClick={(e) => handleRemove(uni, e)}
+                          className="hover:bg-primary/20 rounded-full p-0.5 flex-shrink-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )
+                  })
+                )}
+              </div>
+              <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
             </Button>
           </PopoverTrigger>
         <PopoverContent className="p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
           <Command shouldFilter={false}>
             <CommandInput
-              placeholder="Search university..."
+              placeholder="Search universities..."
               value={search}
               onValueChange={setSearch}
             />
@@ -114,20 +152,18 @@ export default function UniversityCombobox({ value, onChange, label = 'Universit
                   if (university.state) parts.push(university.state)
                   if (university.country) parts.push(university.country)
                   const displayName = parts.join(', ')
+                  const isSelected = value.includes(university.name)
                   return (
                     <CommandItem
                       key={`${university.name}-${university.state ?? ''}`}
                       value={university.name}
-                      onSelect={(currentValue) => {
-                        onChange(currentValue === value ? '' : currentValue)
-                        setOpen(false)
-                      }}
+                      onSelect={() => handleSelect(university.name)}
                       className="text-base py-3"
                     >
                       <Check
                         className={cn(
                           'mr-2 h-4 w-4',
-                          value === university.name ? 'opacity-100' : 'opacity-0'
+                          isSelected ? 'opacity-100' : 'opacity-0'
                         )}
                       />
                       {displayName}
@@ -139,22 +175,12 @@ export default function UniversityCombobox({ value, onChange, label = 'Universit
           </Command>
         </PopoverContent>
         </Popover>
-        {value && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onChange('')
-            }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
-            title="Clear university"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
       </div>
+      {value.length > 0 && (
+        <p className="text-xs text-gray-500">
+          {value.length} {value.length === 1 ? 'university' : 'universities'} selected
+        </p>
+      )}
     </div>
   )
 }

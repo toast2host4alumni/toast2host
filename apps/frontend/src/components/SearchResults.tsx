@@ -12,6 +12,7 @@ type Item = {
   email?: string | null
   profilePhotoUrl?: string | null
   batchYear?: number | null
+  proximityMiles?: number | null
 }
 
 export interface SearchResultsProps {
@@ -205,6 +206,9 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     {it.location}
+                    {it.proximityMiles !== null && it.proximityMiles !== undefined && (
+                      <span className="text-primary font-semibold">• {Math.round(it.proximityMiles)} mi</span>
+                    )}
                   </p>
                 )}
 
@@ -253,6 +257,9 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     {it.location}
+                    {it.proximityMiles !== null && it.proximityMiles !== undefined && (
+                      <span className="text-primary font-semibold">• {Math.round(it.proximityMiles)} mi</span>
+                    )}
                   </p>
                 )}
 
@@ -296,6 +303,9 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         {it.location}
+                        {it.proximityMiles !== null && it.proximityMiles !== undefined && (
+                          <span className="text-primary font-semibold">• {Math.round(it.proximityMiles)} mi</span>
+                        )}
                       </span>
                     )}
                   </div>

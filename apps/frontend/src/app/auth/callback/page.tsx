@@ -26,7 +26,12 @@ function AuthCallbackContent() {
         const googleUser = googleUserRes.ok ? await googleUserRes.json() : null
 
         // Call Strapi's callback endpoint to exchange for JWT
-        const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
+        const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL
+
+        if (!STRAPI_URL) {
+          throw new Error('NEXT_PUBLIC_STRAPI_URL is not defined')
+        }
+
         const response = await fetch(
           `${STRAPI_URL}/api/auth/google/callback?access_token=${accessToken}`
         )

@@ -23,10 +23,10 @@ export default function Footer() {
               Search
             </Link>
             <Link
-              href="/settings"
+              href="/profile"
               className="text-sm text-gray-900 hover:text-gray-700 transition-colors font-medium"
             >
-              Privacy
+              Profile
             </Link>
           </nav>
 

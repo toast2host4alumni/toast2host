@@ -6,6 +6,7 @@ export const searchParamsSchema = z.object({
   lng: z.number().optional(),
   scope: z.enum(['city', 'state', 'country']).optional(),
   university: z.string().optional(),
+  universities: z.array(z.string()).optional(),
   batch_year: z.number().int().optional(),
   sort: z.enum(['proximity', 'recent', 'name']).optional(),
   not_connected_only: z.boolean().optional(),

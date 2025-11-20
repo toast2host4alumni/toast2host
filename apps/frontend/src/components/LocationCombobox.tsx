@@ -13,9 +13,10 @@ export type LocationValue = {
 export interface LocationComboboxProps {
   value?: LocationValue
   onChange: (v: LocationValue) => void
+  label?: string
 }
 
-export default function LocationCombobox({ value, onChange }: LocationComboboxProps) {
+export default function LocationCombobox({ value, onChange, label = 'Location' }: LocationComboboxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
@@ -92,7 +93,7 @@ export default function LocationCombobox({ value, onChange }: LocationComboboxPr
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700">Location</label>
+      <label className="block text-sm font-semibold text-gray-700">{label}</label>
       <div className="relative">
         <input
           ref={inputRef}

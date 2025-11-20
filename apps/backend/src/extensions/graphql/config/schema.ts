@@ -139,6 +139,7 @@ const typeDefs = /* GraphQL */ `
     email: String
     profilePhotoUrl: String
     batchYear: Int
+    proximityMiles: Float
   }
 
   extend type Query {
@@ -153,6 +154,7 @@ const typeDefs = /* GraphQL */ `
       lng: Float
       scope: LocationScope
       university: String
+      universities: [String!]
       batch_year: Int
       sort: SearchSort
       not_connected_only: Boolean

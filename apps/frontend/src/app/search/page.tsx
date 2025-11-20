@@ -6,6 +6,7 @@ import { useSearch } from '@/hooks/useSearch'
 import AuthGuard from '@/components/AuthGuard'
 import LocationCombobox, { type LocationValue } from '@/components/LocationCombobox'
 import UniversityCombobox from '@/components/UniversityCombobox'
+import UniversityMultiSelect from '@/components/UniversityMultiSelect'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 function SearchContent() {
@@ -18,6 +19,7 @@ function SearchContent() {
     location_scope: 'city',
   })
   const [university, setUniversity] = useState<string>('')
+  const [universities, setUniversities] = useState<string[]>([])
   const [batchYear, setBatchYear] = useState<number | undefined>(undefined)
   const [sort, setSort] = useState<'proximity' | 'recent' | 'name'>('recent')
   const [notConnectedOnly, setNotConnectedOnly] = useState(false)
@@ -29,13 +31,16 @@ function SearchContent() {
 
     if (searchMode === 'same_university') {
       setUniversity(user.profile.university_name || '')
+      setUniversities([]) // Clear multi-select
       setBatchYear(undefined)
     } else if (searchMode === 'same_batch') {
       setUniversity(user.profile.university_name || '')
+      setUniversities([]) // Clear multi-select
       setBatchYear(user.profile.batch_year || undefined)
     } else if (searchMode === 'all') {
       // Clear university and batch filters when "All Universities" is selected
       setUniversity('')
+      setUniversities([])
       setBatchYear(undefined)
     }
   }, [searchMode, user])
@@ -54,10 +59,11 @@ function SearchContent() {
     lng: locationValue.location_lng,
     scope: locationValue.location_scope || 'city',
     university: university || undefined,
+    universities: universities.length > 0 ? universities : undefined,
     batch_year: batchYear,
     sort,
     not_connected_only: notConnectedOnly || undefined,
-  }), [locationValue, university, batchYear, sort, notConnectedOnly])
+  }), [locationValue, university, universities, batchYear, sort, notConnectedOnly])
 
   const { data, fetchNextPage, hasNextPage, isFetching, refetch } = useSearch(params, 20)
 
@@ -76,47 +82,30 @@ function SearchContent() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[500px]">
           {/* Search Filters - Always visible */}
           <div className="mb-6 pb-4 border-b border-gray-200 space-y-4">
-            {/* Search Mode Selector */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setSearchMode('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  searchMode === 'all'
-                    ? 'bg-primary text-black shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Across All Universities
-              </button>
-              <button
-                type="button"
-                onClick={() => setSearchMode('same_university')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  searchMode === 'same_university'
-                    ? 'bg-primary text-black shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                From Same Alma Mater
-              </button>
-              <button
-                type="button"
-                onClick={() => setSearchMode('same_batch')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  searchMode === 'same_batch'
-                    ? 'bg-primary text-black shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                From Same Batch
-              </button>
+            {/* Row 1: University (full width) */}
+            <div>
+              {searchMode === 'all' ? (
+                <UniversityMultiSelect value={universities} onChange={setUniversities} label="Choose Alumni host from" />
+              ) : (
+                <UniversityCombobox value={university} onChange={onUniversityChange} label="Choose Alumni host from" />
+              )}
             </div>
 
-            {/* Row 1: Location, University */}
+            {/* Row 2: Location and Search Mode */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <LocationCombobox value={locationValue} onChange={onLocationChange} />
-              <UniversityCombobox value={university} onChange={onUniversityChange} />
+              <LocationCombobox value={locationValue} onChange={onLocationChange} label="Where do you want to go?" />
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Search Mode</label>
+                <select
+                  className="w-full border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-3 px-4 text-base"
+                  value={searchMode}
+                  onChange={(e) => setSearchMode(e.target.value as 'all' | 'same_university' | 'same_batch')}
+                >
+                  <option value="all">Across All Universities</option>
+                  <option value="same_university">From Same Alma Mater</option>
+                  <option value="same_batch">From Same Batch</option>
+                </select>
+              </div>
             </div>
 
             {/* Mobile: Stacked filters */}
