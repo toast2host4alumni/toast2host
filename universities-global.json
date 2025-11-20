@@ -1,0 +1,808 @@
+[
+  {
+    "name": "Massachusetts Institute of Technology",
+    "country": "United States",
+    "state_province": "Massachusetts",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.mit.edu/"
+    ],
+    "domains": [
+      "mit.edu"
+    ],
+    "external_id": "hipolabs-massachusetts-institute-of-technology"
+  },
+  {
+    "name": "Stanford University",
+    "country": "United States",
+    "state_province": "California",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.stanford.edu/"
+    ],
+    "domains": [
+      "stanford.edu"
+    ],
+    "external_id": "hipolabs-stanford-university"
+  },
+  {
+    "name": "Harvard University",
+    "country": "United States",
+    "state_province": "Massachusetts",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.harvard.edu/"
+    ],
+    "domains": [
+      "harvard.edu"
+    ],
+    "external_id": "hipolabs-harvard-university"
+  },
+  {
+    "name": "University of California, Berkeley",
+    "country": "United States",
+    "state_province": "California",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.berkeley.edu/"
+    ],
+    "domains": [
+      "berkeley.edu"
+    ],
+    "external_id": "hipolabs-university-of-california-berkeley"
+  },
+  {
+    "name": "University of Michigan – Ann Arbor",
+    "country": "United States",
+    "state_province": "Michigan",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.umich.edu/"
+    ],
+    "domains": [
+      "umich.edu"
+    ],
+    "external_id": "hipolabs-university-of-michigan-ann-arbor"
+  },
+  {
+    "name": "University of Toronto",
+    "country": "Canada",
+    "state_province": "Ontario",
+    "alpha_two_code": "CA",
+    "web_pages": [
+      "https://www.utoronto.ca/"
+    ],
+    "domains": [
+      "utoronto.ca"
+    ],
+    "external_id": "hipolabs-university-of-toronto"
+  },
+  {
+    "name": "Carnegie Mellon University",
+    "country": "United States",
+    "state_province": "Pennsylvania",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.cmu.edu/"
+    ],
+    "domains": [
+      "cmu.edu"
+    ],
+    "external_id": "hipolabs-carnegie-mellon-university"
+  },
+  {
+    "name": "University of Pennsylvania",
+    "country": "United States",
+    "state_province": "Pennsylvania",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.upenn.edu/"
+    ],
+    "domains": [
+      "upenn.edu"
+    ],
+    "external_id": "hipolabs-university-of-pennsylvania"
+  },
+  {
+    "name": "Cornell University",
+    "country": "United States",
+    "state_province": "New York",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.cornell.edu/"
+    ],
+    "domains": [
+      "cornell.edu"
+    ],
+    "external_id": "hipolabs-cornell-university"
+  },
+  {
+    "name": "University of California, Los Angeles",
+    "country": "United States",
+    "state_province": "California",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.ucla.edu/"
+    ],
+    "domains": [
+      "ucla.edu"
+    ],
+    "external_id": "hipolabs-university-of-california-los-angeles"
+  },
+  {
+    "name": "Columbia University",
+    "country": "United States",
+    "state_province": "New York",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.columbia.edu/"
+    ],
+    "domains": [
+      "columbia.edu"
+    ],
+    "external_id": "hipolabs-columbia-university"
+  },
+  {
+    "name": "Princeton University",
+    "country": "United States",
+    "state_province": "New Jersey",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.princeton.edu/"
+    ],
+    "domains": [
+      "princeton.edu"
+    ],
+    "external_id": "hipolabs-princeton-university"
+  },
+  {
+    "name": "Yale University",
+    "country": "United States",
+    "state_province": "Connecticut",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.yale.edu/"
+    ],
+    "domains": [
+      "yale.edu"
+    ],
+    "external_id": "hipolabs-yale-university"
+  },
+  {
+    "name": "Duke University",
+    "country": "United States",
+    "state_province": "North Carolina",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.duke.edu/"
+    ],
+    "domains": [
+      "duke.edu"
+    ],
+    "external_id": "hipolabs-duke-university"
+  },
+  {
+    "name": "University of Chicago",
+    "country": "United States",
+    "state_province": "Illinois",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.uchicago.edu/"
+    ],
+    "domains": [
+      "uchicago.edu"
+    ],
+    "external_id": "hipolabs-university-of-chicago"
+  },
+  {
+    "name": "Johns Hopkins University",
+    "country": "United States",
+    "state_province": "Maryland",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.jhu.edu/"
+    ],
+    "domains": [
+      "jhu.edu"
+    ],
+    "external_id": "hipolabs-johns-hopkins-university"
+  },
+  {
+    "name": "Northwestern University",
+    "country": "United States",
+    "state_province": "Illinois",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.northwestern.edu/"
+    ],
+    "domains": [
+      "northwestern.edu"
+    ],
+    "external_id": "hipolabs-northwestern-university"
+  },
+  {
+    "name": "University of Washington",
+    "country": "United States",
+    "state_province": "Washington",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.washington.edu/"
+    ],
+    "domains": [
+      "washington.edu"
+    ],
+    "external_id": "hipolabs-university-of-washington"
+  },
+  {
+    "name": "University of Texas at Austin",
+    "country": "United States",
+    "state_province": "Texas",
+    "alpha_two_code": "US",
+    "web_pages": [
+      "https://www.utexas.edu/"
+    ],
+    "domains": [
+      "utexas.edu"
+    ],
+    "external_id": "hipolabs-university-of-texas-at-austin"
+  },
+  {
+    "name": "University of British Columbia",
+    "country": "Canada",
+    "state_province": "British Columbia",
+    "alpha_two_code": "CA",
+    "web_pages": [
+      "https://www.ubc.ca/"
+    ],
+    "domains": [
+      "ubc.ca"
+    ],
+    "external_id": "hipolabs-university-of-british-columbia"
+  },
+  {
+    "name": "McGill University",
+    "country": "Canada",
+    "state_province": "Quebec",
+    "alpha_two_code": "CA",
+    "web_pages": [
+      "https://www.mcgill.ca/"
+    ],
+    "domains": [
+      "mcgill.ca"
+    ],
+    "external_id": "hipolabs-mcgill-university"
+  },
+  {
+    "name": "University of Oxford",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.ox.ac.uk/"
+    ],
+    "domains": [
+      "ox.ac.uk"
+    ],
+    "external_id": "hipolabs-university-of-oxford"
+  },
+  {
+    "name": "University of Cambridge",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.cam.ac.uk/"
+    ],
+    "domains": [
+      "cam.ac.uk"
+    ],
+    "external_id": "hipolabs-university-of-cambridge"
+  },
+  {
+    "name": "Imperial College London",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.imperial.ac.uk/"
+    ],
+    "domains": [
+      "imperial.ac.uk"
+    ],
+    "external_id": "hipolabs-imperial-college-london"
+  },
+  {
+    "name": "University College London",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.ucl.ac.uk/"
+    ],
+    "domains": [
+      "ucl.ac.uk"
+    ],
+    "external_id": "hipolabs-university-college-london"
+  },
+  {
+    "name": "Technical University of Munich",
+    "country": "Germany",
+    "state_province": "Bavaria",
+    "alpha_two_code": "DE",
+    "web_pages": [
+      "https://www.tum.de/"
+    ],
+    "domains": [
+      "tum.de"
+    ],
+    "external_id": "hipolabs-technical-university-of-munich"
+  },
+  {
+    "name": "ETH Zurich (Swiss Federal Institute of Technology)",
+    "country": "Switzerland",
+    "state_province": null,
+    "alpha_two_code": "CH",
+    "web_pages": [
+      "https://ethz.ch/en.html"
+    ],
+    "domains": [
+      "ethz.ch"
+    ],
+    "external_id": "hipolabs-eth-zurich"
+  },
+  {
+    "name": "École Polytechnique Fédérale de Lausanne",
+    "country": "Switzerland",
+    "state_province": null,
+    "alpha_two_code": "CH",
+    "web_pages": [
+      "https://www.epfl.ch/"
+    ],
+    "domains": [
+      "epfl.ch"
+    ],
+    "external_id": "hipolabs-ecole-polytechnique-federale-de-lausanne"
+  },
+  {
+    "name": "Sorbonne University",
+    "country": "France",
+    "state_province": null,
+    "alpha_two_code": "FR",
+    "web_pages": [
+      "https://www.sorbonne-universite.fr/en"
+    ],
+    "domains": [
+      "sorbonne-universite.fr"
+    ],
+    "external_id": "hipolabs-sorbonne-university"
+  },
+  {
+    "name": "KU Leuven",
+    "country": "Belgium",
+    "state_province": null,
+    "alpha_two_code": "BE",
+    "web_pages": [
+      "https://www.kuleuven.be/"
+    ],
+    "domains": [
+      "kuleuven.be"
+    ],
+    "external_id": "hipolabs-ku-leuven"
+  },
+  {
+    "name": "University of Amsterdam",
+    "country": "Netherlands",
+    "state_province": null,
+    "alpha_two_code": "NL",
+    "web_pages": [
+      "https://www.uva.nl/"
+    ],
+    "domains": [
+      "uva.nl"
+    ],
+    "external_id": "hipolabs-university-of-amsterdam"
+  },
+  {
+    "name": "King's College London",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.kcl.ac.uk/"
+    ],
+    "domains": [
+      "kcl.ac.uk"
+    ],
+    "external_id": "hipolabs-kings-college-london"
+  },
+  {
+    "name": "London School of Economics and Political Science",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.lse.ac.uk/"
+    ],
+    "domains": [
+      "lse.ac.uk"
+    ],
+    "external_id": "hipolabs-london-school-of-economics-and-political-science"
+  },
+  {
+    "name": "University of Edinburgh",
+    "country": "United Kingdom",
+    "state_province": "Scotland",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.ed.ac.uk/"
+    ],
+    "domains": [
+      "ed.ac.uk"
+    ],
+    "external_id": "hipolabs-university-of-edinburgh"
+  },
+  {
+    "name": "University of Manchester",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.manchester.ac.uk/"
+    ],
+    "domains": [
+      "manchester.ac.uk"
+    ],
+    "external_id": "hipolabs-university-of-manchester"
+  },
+  {
+    "name": "University of Zurich",
+    "country": "Switzerland",
+    "state_province": null,
+    "alpha_two_code": "CH",
+    "web_pages": [
+      "https://www.uzh.ch/en.html"
+    ],
+    "domains": [
+      "uzh.ch"
+    ],
+    "external_id": "hipolabs-university-of-zurich"
+  },
+  {
+    "name": "University of Birmingham",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.birmingham.ac.uk/"
+    ],
+    "domains": [
+      "birmingham.ac.uk"
+    ],
+    "external_id": "hipolabs-university-of-birmingham"
+  },
+  {
+    "name": "Delft University of Technology",
+    "country": "Netherlands",
+    "state_province": null,
+    "alpha_two_code": "NL",
+    "web_pages": [
+      "https://www.tudelft.nl/"
+    ],
+    "domains": [
+      "tudelft.nl"
+    ],
+    "external_id": "hipolabs-delft-university-of-technology"
+  },
+  {
+    "name": "University of Glasgow",
+    "country": "United Kingdom",
+    "state_province": "Scotland",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.gla.ac.uk/"
+    ],
+    "domains": [
+      "gla.ac.uk"
+    ],
+    "external_id": "hipolabs-university-of-glasgow"
+  },
+  {
+    "name": "University of Leeds",
+    "country": "United Kingdom",
+    "state_province": "England",
+    "alpha_two_code": "GB",
+    "web_pages": [
+      "https://www.leeds.ac.uk/"
+    ],
+    "domains": [
+      "leeds.ac.uk"
+    ],
+    "external_id": "hipolabs-university-of-leeds"
+  },
+  {
+    "name": "Heidelberg University",
+    "country": "Germany",
+    "state_province": "Baden‑Württemberg",
+    "alpha_two_code": "DE",
+    "web_pages": [
+      "https://www.uni-heidelberg.de/en"
+    ],
+    "domains": [
+      "uni-heidelberg.de"
+    ],
+    "external_id": "hipolabs-heidelberg-university"
+  },
+  {
+    "name": "University of Cape Town",
+    "country": "South Africa",
+    "state_province": "Western Cape",
+    "alpha_two_code": "ZA",
+    "web_pages": [
+      "http://www.uct.ac.za/"
+    ],
+    "domains": [
+      "uct.ac.za"
+    ],
+    "external_id": "hipolabs-university-of-cape-town"
+  },
+  {
+    "name": "Indian Institute of Technology Bombay",
+    "country": "India",
+    "state_province": "Maharashtra",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.iitb.ac.in/"
+    ],
+    "domains": [
+      "iitb.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-bombay"
+  },
+  {
+    "name": "Indian Institute of Technology Delhi",
+    "country": "India",
+    "state_province": "Delhi",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://home.iitd.ac.in/"
+    ],
+    "domains": [
+      "iitd.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-delhi"
+  },
+  {
+    "name": "Indian Institute of Technology Madras",
+    "country": "India",
+    "state_province": "Tamil Nadu",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.iitm.ac.in/"
+    ],
+    "domains": [
+      "iitm.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-madras"
+  },
+  {
+    "name": "Indian Institute of Technology Kanpur",
+    "country": "India",
+    "state_province": "Uttar Pradesh",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.iitk.ac.in/"
+    ],
+    "domains": [
+      "iitk.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-kanpur"
+  },
+  {
+    "name": "Indian Institute of Technology Kharagpur",
+    "country": "India",
+    "state_province": "West Bengal",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.iitkgp.ac.in/"
+    ],
+    "domains": [
+      "iitkgp.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-kharagpur"
+  },
+  {
+    "name": "Indian Institute of Technology Roorkee",
+    "country": "India",
+    "state_province": "Uttarakhand",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.iitr.ac.in/"
+    ],
+    "domains": [
+      "iitr.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-roorkee"
+  },
+  {
+    "name": "Indian Institute of Technology Guwahati",
+    "country": "India",
+    "state_province": "Assam",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.iitg.ac.in/"
+    ],
+    "domains": [
+      "iitg.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-guwahati"
+  },
+  {
+    "name": "Indian Institute of Technology Hyderabad",
+    "country": "India",
+    "state_province": "Telangana",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.iith.ac.in/"
+    ],
+    "domains": [
+      "iith.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-hyderabad"
+  },
+  {
+    "name": "Birla Institute of Technology & Science, Pilani",
+    "country": "India",
+    "state_province": "Rajasthan",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.bits-pilani.ac.in/"
+    ],
+    "domains": [
+      "bits-pilani.ac.in"
+    ],
+    "external_id": "hipolabs-birla-institute-of-technology-and-science-pilani"
+  },
+  {
+    "name": "Indian Institute of Technology Indore",
+    "country": "India",
+    "state_province": "Madhya Pradesh",
+    "alpha_two_code": "IN",
+    "web_pages": [
+      "https://www.iiti.ac.in/"
+    ],
+    "domains": [
+      "iiti.ac.in"
+    ],
+    "external_id": "hipolabs-indian-institute-of-technology-indore"
+  },
+  {
+    "name": "National University of Singapore",
+    "country": "Singapore",
+    "state_province": null,
+    "alpha_two_code": "SG",
+    "web_pages": [
+      "https://www.nus.edu.sg/"
+    ],
+    "domains": [
+      "nus.edu.sg"
+    ],
+    "external_id": "hipolabs-national-university-of-singapore"
+  },
+  {
+    "name": "University of Melbourne",
+    "country": "Australia",
+    "state_province": "Victoria",
+    "alpha_two_code": "AU",
+    "web_pages": [
+      "https://www.unimelb.edu.au/"
+    ],
+    "domains": [
+      "unimelb.edu.au"
+    ],
+    "external_id": "hipolabs-university-of-melbourne"
+  },
+  {
+    "name": "University of Sydney",
+    "country": "Australia",
+    "state_province": "New South Wales",
+    "alpha_two_code": "AU",
+    "web_pages": [
+      "https://www.sydney.edu.au/"
+    ],
+    "domains": [
+      "sydney.edu.au"
+    ],
+    "external_id": "hipolabs-university-of-sydney"
+  },
+  {
+    "name": "Monash University",
+    "country": "Australia",
+    "state_province": "Victoria",
+    "alpha_two_code": "AU",
+    "web_pages": [
+      "https://www.monash.edu/"
+    ],
+    "domains": [
+      "monash.edu"
+    ],
+    "external_id": "hipolabs-monash-university"
+  },
+  {
+    "name": "Australian National University",
+    "country": "Australia",
+    "state_province": "Australian Capital Territory",
+    "alpha_two_code": "AU",
+    "web_pages": [
+      "https://www.anu.edu.au/"
+    ],
+    "domains": [
+      "anu.edu.au"
+    ],
+    "external_id": "hipolabs-australian-national-university"
+  },
+  {
+    "name": "University of New South Wales",
+    "country": "Australia",
+    "state_province": "New South Wales",
+    "alpha_two_code": "AU",
+    "web_pages": [
+      "https://www.unsw.edu.au/"
+    ],
+    "domains": [
+      "unsw.edu.au"
+    ],
+    "external_id": "hipolabs-university-of-new-south-wales"
+  },
+  {
+    "name": "University of Auckland",
+    "country": "New Zealand",
+    "state_province": null,
+    "alpha_two_code": "NZ",
+    "web_pages": [
+      "https://www.auckland.ac.nz/"
+    ],
+    "domains": [
+      "auckland.ac.nz"
+    ],
+    "external_id": "hipolabs-university-of-auckland"
+  },
+  {
+    "name": "Nanyang Technological University, Singapore",
+    "country": "Singapore",
+    "state_province": null,
+    "alpha_two_code": "SG",
+    "web_pages": [
+      "https://www.ntu.edu.sg/"
+    ],
+    "domains": [
+      "ntu.edu.sg"
+    ],
+    "external_id": "hipolabs-nanyang-technological-university"
+  },
+  {
+    "name": "University of Auckland",
+    "country": "New Zealand",
+    "state_province": null,
+    "alpha_two_code": "NZ",
+    "web_pages": [
+      "https://www.auckland.ac.nz/"
+    ],
+    "domains": [
+      "auckland.ac.nz"
+    ],
+    "external_id": "hipolabs-university-of-auckland-nz"
+  },
+  {
+    "name": "University of Technology Sydney",
+    "country": "Australia",
+    "state_province": "New South Wales",
+    "alpha_two_code": "AU",
+    "web_pages": [
+      "https://www.uts.edu.au/"
+    ],
+    "domains": [
+      "uts.edu.au"
+    ],
+    "external_id": "hipolabs-university-of-technology-sydney"
+  }
+]
