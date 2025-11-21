@@ -1,6 +1,4 @@
-'use client'
-
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { onboardingSchema, type OnboardingInput } from '@/lib/validation/profile'
@@ -8,12 +6,12 @@ import UniversityCombobox from '@/components/UniversityCombobox'
 import LocationCombobox, { type LocationValue } from '@/components/LocationCombobox'
 import LinkedInInput from '@/components/LinkedInInput'
 import { updateMyProfile } from '@/lib/graphql/operations'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import AuthGuard from '@/components/AuthGuard'
 import { useCurrentUser, useInvalidateCurrentUser } from '@/hooks/useCurrentUser'
 
 function OnboardingContent() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const { data: user, isLoading: userLoading } = useCurrentUser()
   const invalidateUser = useInvalidateCurrentUser()
   const [initialDataLoaded, setInitialDataLoaded] = useState(false)
@@ -61,13 +59,13 @@ function OnboardingContent() {
     const { agree_to_terms, ...profileData } = data
     await updateMyProfile({ ...profileData, onboarding_completed: true })
     await invalidateUser()
-    router.replace('/search')
+    navigate('/search', { replace: true })
   }
 
   // Show loading state while mounting or loading user data
   if (!isMounted || userLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-6" suppressHydrationWarning>
+      <main className="min-h-screen flex items-center justify-center p-6">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-gray-600">Loading profile...</p>
@@ -77,7 +75,7 @@ function OnboardingContent() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6" suppressHydrationWarning>
+    <main className="min-h-screen flex items-center justify-center p-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-2xl w-full space-y-8 fade-in">
         <div className="text-center space-y-3">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl mb-2">

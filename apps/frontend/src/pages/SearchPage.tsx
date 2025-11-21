@@ -1,6 +1,4 @@
-'use client'
-
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import SearchResults from '@/components/SearchResults'
 import { useSearch } from '@/hooks/useSearch'
 import AuthGuard from '@/components/AuthGuard'
@@ -128,7 +126,7 @@ function SearchContent() {
                   <select
                     className="w-full text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-2"
                     value={sort}
-                    onChange={(e) => setSort(e.target.value as any)}
+                    onChange={(e) => setSort(e.target.value as 'proximity' | 'recent' | 'name')}
                   >
                     <option value="recent">Recent</option>
                     <option value="proximity">Proximity</option>
@@ -226,7 +224,7 @@ function SearchContent() {
                   <select
                     className="text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-1.5"
                     value={sort}
-                    onChange={(e) => setSort(e.target.value as any)}
+                    onChange={(e) => setSort(e.target.value as 'proximity' | 'recent' | 'name')}
                   >
                     <option value="recent">Recently Updated</option>
                     <option value="proximity">Proximity</option>

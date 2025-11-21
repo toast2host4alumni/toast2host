@@ -1,6 +1,4 @@
-'use client'
-
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { profileSchema, type ProfileInput } from '@/lib/validation/profile'
@@ -8,7 +6,7 @@ import UniversityCombobox from '@/components/UniversityCombobox'
 import LocationCombobox, { type LocationValue } from '@/components/LocationCombobox'
 import LinkedInInput from '@/components/LinkedInInput'
 import { updateMyProfile, createPrivacyRequest, getMyPrivacyRequests } from '@/lib/graphql/operations'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import AuthGuard from '@/components/AuthGuard'
 import { useCurrentUser, useInvalidateCurrentUser } from '@/hooks/useCurrentUser'
 
@@ -16,7 +14,7 @@ type Req = { id: string; type: 'deletion' | 'export'; status: string; created_at
 
 function ProfileContent() {
   const [activeTab, setActiveTab] = useState<'profile' | 'privacy'>('profile')
-  const router = useRouter()
+  const navigate = useNavigate()
   const { data: user, isLoading: userLoading } = useCurrentUser()
   const invalidateUser = useInvalidateCurrentUser()
   const [initialDataLoaded, setInitialDataLoaded] = useState(false)
@@ -279,7 +277,7 @@ function ProfileContent() {
           </button>
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => navigate(-1)}
             className="bg-white text-gray-900 font-semibold px-6 py-2.5 rounded-lg border-2 border-gray-200 hover:border-primary transition-all px-6 py-3 rounded-xl font-semibold"
           >
             Cancel

@@ -1,6 +1,4 @@
-'use client'
-
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { approveConnection, getMyPendingConnections, rejectConnection, getMyConnections, type PendingConnection, type ConnectedUser } from '@/lib/graphql/operations'
 import AuthGuard from '@/components/AuthGuard'
 import { toast } from 'sonner'
@@ -264,7 +262,7 @@ function RequestsContent() {
                       {it.requester.university && (
                         <p className="text-sm text-gray-600 mb-1">
                           {it.requester.university}
-                          {it.requester.batchYear && ` • ${it.requester.batchYear}`}
+                          {it.requester.batchYear && ` - ${it.requester.batchYear}`}
                         </p>
                       )}
                       {it.requester.location && (
@@ -287,13 +285,6 @@ function RequestsContent() {
                       <div className="flex gap-3 w-full mt-2">
                         {celebratingIds.has(it.id) ? (
                           <div className="flex-1 relative">
-                            <div className="absolute inset-0 animate-ping rounded-lg bg-green-400 opacity-75"></div>
-                            <div className="absolute -inset-2">
-                              <div className="absolute top-0 left-1/2 w-3 h-3 bg-green-400 rounded-full transform -translate-x-1/2 -translate-y-full animate-particle-up"></div>
-                              <div className="absolute bottom-0 left-1/2 w-3 h-3 bg-green-400 rounded-full transform -translate-x-1/2 translate-y-full animate-particle-down"></div>
-                              <div className="absolute left-0 top-1/2 w-3 h-3 bg-green-400 rounded-full transform -translate-y-1/2 -translate-x-full animate-particle-left"></div>
-                              <div className="absolute right-0 top-1/2 w-3 h-3 bg-green-400 rounded-full transform -translate-y-1/2 translate-x-full animate-particle-right"></div>
-                            </div>
                             <span className="relative flex-1 bg-green-500 text-white font-bold py-2.5 rounded-lg shadow-lg text-sm flex items-center justify-center scale-110">
                               <svg className="w-4 h-4 mr-1.5 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -345,7 +336,7 @@ function RequestsContent() {
                         {it.requester.university && (
                           <p className="text-sm text-gray-600 mb-1">
                             {it.requester.university}
-                            {it.requester.batchYear && ` • Class of ${it.requester.batchYear}`}
+                            {it.requester.batchYear && ` - Class of ${it.requester.batchYear}`}
                           </p>
                         )}
                         {it.requester.location && (
@@ -369,13 +360,6 @@ function RequestsContent() {
                       <div className="flex gap-3 flex-shrink-0">
                         {celebratingIds.has(it.id) ? (
                           <div className="relative">
-                            <div className="absolute inset-0 animate-ping rounded-lg bg-green-400 opacity-75"></div>
-                            <div className="absolute -inset-2">
-                              <div className="absolute top-0 left-1/2 w-3 h-3 bg-green-400 rounded-full transform -translate-x-1/2 -translate-y-full animate-particle-up"></div>
-                              <div className="absolute bottom-0 left-1/2 w-3 h-3 bg-green-400 rounded-full transform -translate-x-1/2 translate-y-full animate-particle-down"></div>
-                              <div className="absolute left-0 top-1/2 w-3 h-3 bg-green-400 rounded-full transform -translate-y-1/2 -translate-x-full animate-particle-left"></div>
-                              <div className="absolute right-0 top-1/2 w-3 h-3 bg-green-400 rounded-full transform -translate-y-1/2 translate-x-full animate-particle-right"></div>
-                            </div>
                             <span className="relative bg-green-500 text-white font-bold px-6 py-2.5 rounded-lg shadow-lg text-sm inline-flex items-center scale-110">
                               <svg className="w-4 h-4 mr-1.5 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -455,7 +439,7 @@ function RequestsContent() {
                       {user.university && (
                         <p className="text-sm text-gray-600 mb-1">
                           {user.university}
-                          {user.batchYear && ` • ${user.batchYear}`}
+                          {user.batchYear && ` - ${user.batchYear}`}
                         </p>
                       )}
                       {user.location && (
@@ -509,7 +493,7 @@ function RequestsContent() {
                         {user.university && (
                           <p className="text-sm text-gray-600 mb-1">
                             {user.university}
-                            {user.batchYear && ` • Class of ${user.batchYear}`}
+                            {user.batchYear && ` - Class of ${user.batchYear}`}
                           </p>
                         )}
                         {user.location && (

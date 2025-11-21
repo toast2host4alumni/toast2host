@@ -1,15 +1,12 @@
-'use client'
-
-import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { isAuthenticated, removeAuthToken } from '@/lib/auth'
 import { getMyPendingConnections } from '@/lib/graphql/operations'
 
 export default function Header() {
-  const router = useRouter()
-  const pathname = usePathname()
+  const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
   const [isAuthed, setIsAuthed] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
@@ -20,7 +17,7 @@ export default function Header() {
       setIsAuthed(isAuthenticated())
     }
     checkAuth()
-  }, [pathname])
+  }, [location.pathname])
 
   useEffect(() => {
     // Fetch pending connections count when authenticated
@@ -42,19 +39,19 @@ export default function Header() {
     // Poll for new requests every 30 seconds
     const interval = setInterval(fetchPendingCount, 30000)
     return () => clearInterval(interval)
-  }, [isAuthed, pathname])
+  }, [isAuthed, location.pathname])
 
   const handleLogout = () => {
     removeAuthToken()
     queryClient.clear()
     setIsAuthed(false)
-    router.replace('/signin')
+    navigate('/signin', { replace: true })
   }
 
   return (
     <header className="border-b border-gray-200 bg-primary sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+        <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <img src="/t2h_logo.png" alt="Toast2Host" className="h-12 w-auto object-contain" onError={(e) => {
             console.error('Logo failed to load')
             e.currentTarget.style.display = 'none'
@@ -66,7 +63,7 @@ export default function Header() {
             <>
               {/* Protected navigation - only show when authenticated */}
               <Link
-                href="/search"
+                to="/search"
                 className="text-gray-900 hover:text-gray-700 font-semibold transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
               >
                 <span className="hidden md:inline">Search</span>
@@ -75,7 +72,7 @@ export default function Header() {
                 </svg>
               </Link>
               <Link
-                href="/requests"
+                to="/requests"
                 className="relative text-gray-900 hover:text-gray-700 font-semibold transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
               >
                 <span className="hidden md:inline">Connections</span>
@@ -89,7 +86,7 @@ export default function Header() {
                 )}
               </Link>
               <Link
-                href="/profile"
+                to="/profile"
                 className="text-gray-900 hover:text-gray-700 font-semibold transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
               >
                 <span className="hidden md:inline">Profile</span>
@@ -111,7 +108,7 @@ export default function Header() {
             <>
               {/* Public navigation - only show when not authenticated */}
               <Link
-                href="/signin"
+                to="/signin"
                 className="bg-black text-primary rounded-lg px-9 py-2 text-sm font-bold shadow-md hover:shadow-lg hover:bg-gray-900 transition-all"
               >
                 <span className="hidden md:inline">Sign In</span>

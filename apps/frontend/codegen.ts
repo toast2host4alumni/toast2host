@@ -1,6 +1,6 @@
 import type { CodegenConfig } from '@graphql-codegen/cli'
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL
+const STRAPI_URL = process.env.VITE_STRAPI_URL
 
 const config: CodegenConfig = {
   schema: `${STRAPI_URL}/graphql`,

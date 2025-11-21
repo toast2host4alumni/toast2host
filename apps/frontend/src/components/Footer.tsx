@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 
 export default function Footer() {
   return (
@@ -11,19 +11,19 @@ export default function Footer() {
 
           <nav className="flex items-center gap-6">
             <Link
-              href="/"
+              to="/"
               className="text-sm text-gray-900 hover:text-gray-700 transition-colors font-medium"
             >
               Home
             </Link>
             <Link
-              href="/search"
+              to="/search"
               className="text-sm text-gray-900 hover:text-gray-700 transition-colors font-medium"
             >
               Search
             </Link>
             <Link
-              href="/profile"
+              to="/profile"
               className="text-sm text-gray-900 hover:text-gray-700 transition-colors font-medium"
             >
               Profile

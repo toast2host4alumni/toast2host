@@ -1,21 +1,19 @@
-'use client'
-
 import { useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { setAuthToken } from '@/lib/auth'
 
 function AuthCallbackContent() {
-  const params = useSearchParams()
-  const router = useRouter()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   useEffect(() => {
     async function handleCallback() {
       try {
         // Get Google's access_token from Strapi redirect
-        const accessToken = params.get('access_token')
+        const accessToken = searchParams.get('access_token')
 
         if (!accessToken) {
-          router.replace('/signin')
+          navigate('/signin', { replace: true })
           return
         }
 
@@ -26,10 +24,10 @@ function AuthCallbackContent() {
         const googleUser = googleUserRes.ok ? await googleUserRes.json() : null
 
         // Call Strapi's callback endpoint to exchange for JWT
-        const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL
+        const STRAPI_URL = import.meta.env.VITE_STRAPI_URL
 
         if (!STRAPI_URL) {
-          throw new Error('NEXT_PUBLIC_STRAPI_URL is not defined')
+          throw new Error('VITE_STRAPI_URL is not defined')
         }
 
         const response = await fetch(
@@ -94,18 +92,18 @@ function AuthCallbackContent() {
             }
           }
 
-          router.replace('/search')
+          navigate('/search', { replace: true })
         } else {
           throw new Error('No JWT received')
         }
       } catch (error) {
         console.error('Auth error:', error)
-        router.replace('/signin')
+        navigate('/signin', { replace: true })
       }
     }
 
     handleCallback()
-  }, [params, router])
+  }, [searchParams, navigate])
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
@@ -119,9 +117,8 @@ function AuthCallbackContent() {
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<main className="p-6">Loading…</main>}>
+    <Suspense fallback={<main className="p-6">Loading...</main>}>
       <AuthCallbackContent />
     </Suspense>
   )
 }
-
