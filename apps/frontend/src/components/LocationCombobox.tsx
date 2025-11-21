@@ -23,18 +23,18 @@ export default function LocationCombobox({ value, onChange, label = 'Location' }
   useEffect(() => {
     if (!inputRef.current || typeof window === 'undefined') return
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
     if (!apiKey) {
       console.warn('Google Maps API key not configured')
       return
     }
 
-    // Check if Google Maps is already loaded
     const initAutocomplete = () => {
       if (!inputRef.current || !window.google?.maps?.places) return
 
+      // Using old Autocomplete API (still supported, just deprecated for new customers)
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-        types: ['(regions)'], // Cities, states, countries
+        types: ['(regions)'],
         fields: ['address_components', 'geometry', 'name', 'formatted_address'],
       })
 
@@ -45,7 +45,6 @@ export default function LocationCombobox({ value, onChange, label = 'Location' }
         const lat = place.geometry.location?.lat()
         const lng = place.geometry.location?.lng()
 
-        // Determine scope from address components
         let scope: 'city' | 'state' | 'country' = 'city'
         const addressComponents = place.address_components || []
 
@@ -66,16 +65,17 @@ export default function LocationCombobox({ value, onChange, label = 'Location' }
       })
     }
 
-    // Load script only if not already loaded
-    if (window.google?.maps?.places) {
-      initAutocomplete()
-    } else if (!document.querySelector(`script[src*="maps.googleapis.com"]`)) {
+    const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`)
+
+    if (!existingScript) {
       const script = document.createElement('script')
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
       script.async = true
       script.defer = true
-      script.onload = initAutocomplete
+      script.onload = () => initAutocomplete()
       document.head.appendChild(script)
+    } else if (window.google?.maps?.places) {
+      initAutocomplete()
     }
   }, [onChange])
 
