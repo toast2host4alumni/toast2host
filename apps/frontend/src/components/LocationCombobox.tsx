@@ -97,7 +97,7 @@ export default function LocationCombobox({ value, onChange, label = 'Location' }
       <div className="relative">
         <input
           ref={inputRef}
-          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+          className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
           placeholder="Search city, state, or country..."
           defaultValue={value?.location_text || ''}
         />

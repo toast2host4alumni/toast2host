@@ -30,7 +30,16 @@ function ProfileContent() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<ProfileInput>({ resolver: zodResolver(profileSchema) })
+  } = useForm<ProfileInput>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      university_name: '',
+      location_text: '',
+      linkedin_url: '',
+    },
+  })
 
   useEffect(() => {
     if (!userLoading && user?.profile && !initialDataLoaded) {
@@ -100,7 +109,7 @@ function ProfileContent() {
 
   if (userLoading) {
     return (
-      <main className="p-6 max-w-2xl mx-auto py-12">
+      <main className="p-3 max-w-2xl mx-auto py-6">
         <div className="flex items-center justify-center py-16">
           <svg className="animate-spin h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -112,7 +121,7 @@ function ProfileContent() {
   }
 
   return (
-    <main className="p-6 max-w-4xl mx-auto space-y-6 py-12 fade-in">
+    <main className="p-3 max-w-4xl mx-auto space-y-4 py-6 fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-black text-gray-900">Profile & Settings</h1>
@@ -124,7 +133,7 @@ function ProfileContent() {
       <div className="flex gap-2 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('profile')}
-          className={`px-6 py-3 font-semibold transition-all border-b-2 ${
+          className={`px-4 py-2 font-semibold transition-all border-b-2 ${
             activeTab === 'profile'
               ? 'text-primary border-primary'
               : 'text-gray-500 border-transparent hover:text-gray-700'
@@ -134,7 +143,7 @@ function ProfileContent() {
         </button>
         <button
           onClick={() => setActiveTab('privacy')}
-          className={`px-6 py-3 font-semibold transition-all border-b-2 ${
+          className={`px-4 py-2 font-semibold transition-all border-b-2 ${
             activeTab === 'privacy'
               ? 'text-primary border-primary'
               : 'text-gray-500 border-transparent hover:text-gray-700'
@@ -155,7 +164,7 @@ function ProfileContent() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
         {watch('profile_photo_url') && (
           <div className="flex justify-center">
             <img
@@ -166,7 +175,7 @@ function ProfileContent() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">First Name</label>
             <input
@@ -255,7 +264,7 @@ function ProfileContent() {
         <div className="flex gap-3 pt-2">
           <button
             type="submit"
-            className="bg-primary text-black font-bold px-9 py-3 rounded-lg shadow-md hover:shadow-lg hover:bg-primary-dark transition-all flex-1 rounded-xl px-6 py-3 font-bold disabled:opacity-60"
+            className="bg-primary text-black font-bold flex-1 rounded-xl px-4 py-2 shadow-md hover:shadow-lg hover:bg-primary-dark transition-all disabled:opacity-60"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -278,7 +287,7 @@ function ProfileContent() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="bg-white text-gray-900 font-semibold px-6 py-2.5 rounded-lg border-2 border-gray-200 hover:border-primary transition-all px-6 py-3 rounded-xl font-semibold"
+            className="bg-white text-gray-900 font-semibold rounded-xl px-4 py-2 border-2 border-gray-200 hover:border-primary transition-all"
           >
             Cancel
           </button>
@@ -289,7 +298,7 @@ function ProfileContent() {
 
       {activeTab === 'privacy' && (
         <>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center">
                 <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,9 +313,9 @@ function ProfileContent() {
 
             <div className="divider"></div>
 
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-3">
               <button
-                className="bg-white text-gray-900 font-semibold px-6 py-2.5 rounded-lg border-2 border-gray-200 hover:border-primary transition-all px-6 py-4 rounded-xl font-semibold text-left flex items-center gap-4 group"
+                className="bg-white text-gray-900 font-semibold rounded-xl px-3 py-2 border-2 border-gray-200 hover:border-primary transition-all text-left flex items-center gap-4 group"
                 onClick={() => submitPrivacyRequest('export')}
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -321,7 +330,7 @@ function ProfileContent() {
               </button>
 
               <button
-                className="bg-white text-gray-900 font-semibold px-6 py-2.5 rounded-lg border-2 border-gray-200 hover:border-primary transition-all px-6 py-4 rounded-xl font-semibold text-left flex items-center gap-4 group"
+                className="bg-white text-gray-900 font-semibold rounded-xl px-3 py-2 border-2 border-gray-200 hover:border-primary transition-all text-left flex items-center gap-4 group"
                 onClick={() => submitPrivacyRequest('deletion')}
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-red-100 to-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -346,7 +355,7 @@ function ProfileContent() {
             )}
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
             <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -374,25 +383,25 @@ function ProfileContent() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-700">ID</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Type</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Created</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">ID</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Type</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Status</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">Created</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {privacyItems.map((it) => (
                       <tr key={it.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 font-mono text-gray-600">#{it.id}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2 font-mono text-gray-600">#{it.id}</td>
+                        <td className="px-3 py-2">
                           <span className={`badge ${it.type === 'export' ? 'badge-primary' : 'badge-pending'}`}>
                             {it.type}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2">
                           <span className="capitalize text-gray-700 font-medium">{it.status}</span>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{new Date(it.created_at).toLocaleDateString()}</td>
+                        <td className="px-3 py-2 text-gray-600">{new Date(it.created_at).toLocaleDateString()}</td>
                       </tr>
                     ))}
                   </tbody>

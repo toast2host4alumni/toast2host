@@ -22,7 +22,16 @@ function OnboardingContent() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<OnboardingInput>({ resolver: zodResolver(onboardingSchema) })
+  } = useForm<OnboardingInput>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      university_name: '',
+      location_text: '',
+      linkedin_url: '',
+    },
+  })
 
   // Handle client-side mounting
   useEffect(() => {
@@ -65,7 +74,7 @@ function OnboardingContent() {
   // Show loading state while mounting or loading user data
   if (!isMounted || userLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-6">
+      <main className="min-h-screen flex items-center justify-center p-3">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-gray-600">Loading profile...</p>
@@ -75,20 +84,41 @@ function OnboardingContent() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-2xl w-full space-y-8 fade-in">
+    <main className="min-h-screen flex items-center justify-center p-3">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 max-w-2xl w-full space-y-4 fade-in">
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl mb-2">
-            <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
+          {/* Profile Photo */}
+          {user?.profile?.profile_photo_url ? (
+            <img
+              src={user.profile.profile_photo_url}
+              alt="Profile"
+              className="w-20 h-20 rounded-full mx-auto mb-2 object-cover border-4 border-primary/20"
+            />
+          ) : (
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl mb-2">
+              <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+          )}
           <h1 className="text-4xl font-black text-gray-900">Complete your profile</h1>
           <p className="text-gray-600 text-lg">Help fellow alumni find and connect with you</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Email (non-editable) */}
+          {user?.email && (
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">Email</label>
+              <input
+                className="w-full bg-gray-50 cursor-not-allowed"
+                value={user.email}
+                disabled
+                readOnly
+              />
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">First Name</label>
               <input
@@ -172,7 +202,7 @@ function OnboardingContent() {
           </div>
 
           <div className="space-y-2">
-            <div className="border-2 border-gray-200 rounded-lg px-4 py-3.5 bg-white hover:border-gray-300 transition-colors">
+            <div className="border-2 border-gray-200 rounded-lg px-3 py-2.5 bg-white hover:border-gray-300 transition-colors">
               <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
@@ -219,7 +249,7 @@ function OnboardingContent() {
 
           <button
             type="submit"
-            className="bg-primary text-black font-bold px-9 py-3 rounded-lg shadow-md hover:shadow-lg hover:bg-primary-dark transition-all w-full inline-flex items-center justify-center rounded-xl px-6 py-4 text-lg font-bold shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
+            className="bg-primary text-black font-bold w-full inline-flex items-center justify-center rounded-xl px-6 py-3 text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

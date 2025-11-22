@@ -106,16 +106,18 @@ export default function Header() {
             </>
           ) : (
             <>
-              {/* Public navigation - only show when not authenticated */}
-              <Link
-                to="/signin"
-                className="bg-black text-primary rounded-lg px-9 py-2 text-sm font-bold shadow-md hover:shadow-lg hover:bg-gray-900 transition-all"
-              >
-                <span className="hidden md:inline">Sign In</span>
-                <svg className="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-              </Link>
+              {/* Public navigation - only show when not authenticated and not on signin page */}
+              {location.pathname !== '/signin' && (
+                <Link
+                  to="/signin"
+                  className="bg-black text-primary rounded-lg px-9 py-2 text-sm font-bold shadow-md hover:shadow-lg hover:bg-gray-900 transition-all"
+                >
+                  <span className="hidden md:inline">Sign In</span>
+                  <svg className="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                </Link>
+              )}
             </>
           )}
         </nav>

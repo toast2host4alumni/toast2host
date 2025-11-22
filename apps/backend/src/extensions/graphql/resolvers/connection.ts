@@ -1,3 +1,5 @@
+import { sendConnectionRequestEmail } from '../../../utils/email-service'
+
 type GQLCtx = { state: { user?: { id: number } } }
 
 async function countConnectionsToday(actorId: number): Promise<number> {
@@ -62,6 +64,14 @@ const connectionResolvers = {
         const profile = actorId ? profileMap.get(actorId) : null
         const userData = actorId ? userMap.get(actorId) : null
         const fullName = profile ? [profile.first_name, profile.last_name].filter(Boolean).join(' ') : 'Unknown'
+
+        // Prepend backend URL to local image paths
+        let profilePhotoUrl = profile?.profile_photo_url || null
+        if (profilePhotoUrl && profilePhotoUrl.startsWith('/uploads/')) {
+          const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
+          profilePhotoUrl = `${serverUrl}${profilePhotoUrl}`
+        }
+
         return {
           id: String(c.id),
           status: c.status,
@@ -71,7 +81,7 @@ const connectionResolvers = {
             name: fullName || 'Unknown',
             university: profile?.university_name || null,
             location: profile?.location_text || null,
-            profilePhotoUrl: profile?.profile_photo_url || null,
+            profilePhotoUrl,
             batchYear: profile?.batch_year || null,
             linkedinUrl: profile?.linkedin_url || null,
             email: userData?.email || null,
@@ -201,6 +211,45 @@ const connectionResolvers = {
           data: { connection: connection.id, actor_user: user.id, target_user: targetId, type: 'revealed' },
         })
       }
+
+      // Send email notification to target user
+      try {
+        // Fetch guest (actor) profile
+        const guestProfile = await strapi.entityService.findMany('api::user-profile.user-profile', {
+          filters: { user: user.id },
+          populate: { user: { fields: ['id', 'email'] } },
+          limit: 1,
+        })
+
+        // Fetch host (target) profile
+        const hostProfile = await strapi.entityService.findMany('api::user-profile.user-profile', {
+          filters: { user: targetId },
+          populate: { user: { fields: ['id', 'email'] } },
+          limit: 1,
+        })
+
+        if (guestProfile[0] && hostProfile[0] && hostProfile[0].user?.email) {
+          const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
+          const frontendUrl = process.env.FRONTEND_URL || 'https://app.toast2host.net'
+          const logoUrl = `${serverUrl}/t2h_logo.png`
+
+          await sendConnectionRequestEmail({
+            hostEmail: hostProfile[0].user.email,
+            hostFirstName: hostProfile[0].first_name || 'there',
+            guestFullName: [guestProfile[0].first_name, guestProfile[0].last_name].filter(Boolean).join(' ') || 'Alumni',
+            guestFirstName: guestProfile[0].first_name || 'Alumni',
+            guestUniversity: guestProfile[0].university_name || 'Unknown University',
+            guestBatch: guestProfile[0].batch_year ? String(guestProfile[0].batch_year) : 'Unknown',
+            guestLinkedIn: guestProfile[0].linkedin_url || undefined,
+            connectionsUrl: `${frontendUrl}/requests`,
+            logoUrl,
+          })
+        }
+      } catch (emailError) {
+        console.error('Failed to send connection request email:', emailError)
+        // Don't fail the connection request if email fails
+      }
+
       return { id: String(connection.id), status }
     },
     acceptConnection: async (_parent: unknown, args: { id: string }, ctx: GQLCtx) => {

@@ -72,9 +72,10 @@ export default function UniversityCombobox({ value, onChange, label = 'Universit
           <PopoverTrigger asChild>
             <Button
               variant="outline"
+              size="none"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-start text-left font-normal gap-0 h-[50px] px-4 border-2 border-gray-200 hover:border-gray-300 text-base"
+              className="w-full justify-start text-left font-normal gap-0 h-[40px] px-3 py-2 border-2 border-gray-200 hover:border-gray-300 text-base shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
             >
               <span className={`flex-1 truncate text-left text-base ${value ? 'text-gray-900' : 'text-gray-400'}`}>
                 {value || "Select university..."}
@@ -89,7 +90,7 @@ export default function UniversityCombobox({ value, onChange, label = 'Universit
               value={search}
               onValueChange={setSearch}
             />
-            <CommandList>
+            <CommandList className="max-h-60">
               {loading && (
                 <CommandEmpty>
                   <div className="flex items-center justify-center gap-2">
@@ -122,7 +123,7 @@ export default function UniversityCombobox({ value, onChange, label = 'Universit
                         onChange(currentValue === value ? '' : currentValue)
                         setOpen(false)
                       }}
-                      className="text-base py-3"
+                      className="text-base py-2"
                     >
                       <Check
                         className={cn(

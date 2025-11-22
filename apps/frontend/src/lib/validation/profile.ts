@@ -21,7 +21,7 @@ export const profileSchema = z.object({
   location_lat: z.number().optional(),
   location_lng: z.number().optional(),
   location_scope: z.enum(['city', 'state', 'country']).optional(),
-  batch_year: z.number().int().min(1900).max(2100).optional(),
+  batch_year: z.number().int().min(1900).max(2100).optional().or(z.nan().transform(() => undefined)),
 })
 
 // Schema for onboarding - adds terms acceptance requirement

@@ -26,6 +26,9 @@ importers:
       '@strapi/plugin-users-permissions':
         specifier: ^5.0.0
         version: 5.31.0(@babel/runtime@7.28.4)(@codemirror/autocomplete@6.19.1)(@codemirror/language@6.11.3)(@codemirror/lint@6.9.2)(@codemirror/search@6.5.11)(@codemirror/state@6.5.2)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.38.8)(@strapi/strapi@5.31.0(@babel/preset-env@7.28.5(@babel/core@7.28.5))(@babel/runtime@7.28.4)(@codemirror/autocomplete@6.19.1)(@codemirror/language@6.11.3)(@codemirror/lint@6.9.2)(@codemirror/search@6.5.11)(@codemirror/state@6.5.2)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.38.8)(@swc/core@1.15.2(@swc/helpers@0.5.17))(@swc/helpers@0.5.17)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.27))(@types/node@22.19.1)(@types/react-dom@19.2.3(@types/react@18.3.27))(@types/react@18.3.27)(better-sqlite3@12.4.1)(codemirror@5.65.20)(esbuild@0.25.12)(koa@2.16.1)(lightningcss@1.30.2)(pg@8.16.3)(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(redux@4.2.1)(styled-components@6.1.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(terser@5.44.1)(type-fest@4.41.0))(@types/react-dom@19.2.3(@types/react@18.3.27))(@types/react@18.3.27)(codemirror@5.65.20)(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(redux@4.2.1)(styled-components@6.1.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+      '@strapi/provider-email-nodemailer':
+        specifier: ^5.31.2
+        version: 5.31.2
       '@strapi/strapi':
         specifier: ^5.0.0
         version: 5.31.0(@babel/preset-env@7.28.5(@babel/core@7.28.5))(@babel/runtime@7.28.4)(@codemirror/autocomplete@6.19.1)(@codemirror/language@6.11.3)(@codemirror/lint@6.9.2)(@codemirror/search@6.5.11)(@codemirror/state@6.5.2)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.38.8)(@swc/core@1.15.2(@swc/helpers@0.5.17))(@swc/helpers@0.5.17)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.27))(@types/node@22.19.1)(@types/react-dom@19.2.3(@types/react@18.3.27))(@types/react@18.3.27)(better-sqlite3@12.4.1)(codemirror@5.65.20)(esbuild@0.25.12)(koa@2.16.1)(lightningcss@1.30.2)(pg@8.16.3)(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(redux@4.2.1)(styled-components@6.1.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(terser@5.44.1)(type-fest@4.41.0)
@@ -3335,6 +3338,10 @@ packages:
       react-dom: ^17.0.0 || ^18.0.0
       react-router-dom: ^6.0.0
       styled-components: ^6.0.0
+
+  '@strapi/provider-email-nodemailer@5.31.2':
+    resolution: {integrity: sha512-Vi5Ri2BU5zbKzAPN66H7DA6X1JXqQC2OEq+F+p/JGCaqC1Ka1sL4toydYMREQz9y5oCgGrgtnsegRFbLbx6bCw==}
+    engines: {node: '>=20.0.0 <=24.x.x', npm: '>=6.0.0'}
 
   '@strapi/provider-email-sendmail@5.31.0':
     resolution: {integrity: sha512-O3ArPDptyfhiw2lTGpETAZzXS9nsZsUk+Vkwq9qBYUiiEdWRJrxWi7K0x5/yj1cxWq3siPomLq9o7wdSU+y9zw==}
@@ -7213,6 +7220,10 @@ packages:
 
   nodemailer-shared@1.1.0:
     resolution: {integrity: sha512-68xW5LSyPWv8R0GLm6veAvm7E+XFXkVgvE3FW0FGxNMMZqMkPFeGDVALfR1DPdSfcoO36PnW7q5AAOgFImEZGg==}
+
+  nodemailer@6.10.1:
+    resolution: {integrity: sha512-Z+iLaBGVaSjbIzQ4pX6XV41HrooLsQ10ZWPUehGmuantvzWoDVBnmsdUcOIDM1t+yPor5pDhVlDESgOMEGxhHA==}
+    engines: {node: '>=6.0.0'}
 
   nodemon@3.0.2:
     resolution: {integrity: sha512-9qIN2LNTrEzpOPBaWHTm4Asy1LxXLSickZStAQ4IZe7zsoIpD/A7LWxhZV3t4Zu352uBcqVnRsDXSMR2Sc3lTA==}
@@ -13828,6 +13839,11 @@ snapshots:
       - supports-color
       - typescript
 
+  '@strapi/provider-email-nodemailer@5.31.2':
+    dependencies:
+      lodash: 4.17.21
+      nodemailer: 6.10.1
+
   '@strapi/provider-email-sendmail@5.31.0':
     dependencies:
       '@strapi/utils': 5.31.0
@@ -18450,6 +18466,8 @@ snapshots:
   nodemailer-shared@1.1.0:
     dependencies:
       nodemailer-fetch: 1.6.0
+
+  nodemailer@6.10.1: {}
 
   nodemon@3.0.2:
     dependencies:

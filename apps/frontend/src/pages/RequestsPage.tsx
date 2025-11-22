@@ -117,11 +117,11 @@ function RequestsContent() {
   }
 
   return (
-    <main className="p-6 max-w-7xl mx-auto space-y-6 fade-in">
+    <main className="p-3 max-w-7xl mx-auto space-y-4 fade-in">
       {/* Confirmation Dialog */}
       {confirmAction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-xl p-4 max-w-md w-full mx-4 shadow-xl">
             <h3 className="text-lg font-bold text-gray-900 mb-2">
               {confirmAction.type === 'approve' ? 'Approve Connection' : 'Reject Request'}
             </h3>
@@ -131,7 +131,7 @@ function RequestsContent() {
                 : `Reject connection request from ${confirmAction.item.requester.name}?`}
             </p>
             {confirmAction.item.requester.linkedinUrl && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+              <div className="mb-3 p-2.5 bg-blue-50 rounded-lg">
                 <a
                   href={confirmAction.item.requester.linkedinUrl}
                   target="_blank"
@@ -178,7 +178,7 @@ function RequestsContent() {
       <div className="flex gap-2 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('pending')}
-          className={`px-6 py-3 font-semibold transition-colors relative ${
+          className={`px-4 py-2 font-semibold transition-colors relative ${
             activeTab === 'pending'
               ? 'text-primary'
               : 'text-gray-500 hover:text-gray-700'
@@ -196,7 +196,7 @@ function RequestsContent() {
         </button>
         <button
           onClick={() => setActiveTab('connected')}
-          className={`px-6 py-3 font-semibold transition-colors relative ${
+          className={`px-4 py-2 font-semibold transition-colors relative ${
             activeTab === 'connected'
               ? 'text-primary'
               : 'text-gray-500 hover:text-gray-700'
@@ -214,7 +214,7 @@ function RequestsContent() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[400px]">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16">
             <svg className="animate-spin h-10 w-10 text-primary mb-4" fill="none" viewBox="0 0 24 24">
@@ -244,9 +244,9 @@ function RequestsContent() {
           ) : (
             <>
               {/* Mobile: Card View */}
-              <div className="block md:hidden space-y-6">
+              <div className="block md:hidden space-y-4">
                 {pendingItems.map((it) => (
-                  <div key={it.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div key={it.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
                     <div className="flex flex-col items-center text-center">
                       <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
                         {it.requester.profilePhotoUrl ? (
@@ -315,9 +315,9 @@ function RequestsContent() {
               </div>
 
               {/* Desktop: List View */}
-              <div className="hidden md:block space-y-4">
+              <div className="hidden md:block space-y-3">
                 {pendingItems.map((it) => (
-                  <div key={it.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow">
+                  <div key={it.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start gap-4">
                       <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
                         {it.requester.profilePhotoUrl ? (
@@ -369,7 +369,7 @@ function RequestsContent() {
                           </div>
                         ) : (
                           <button
-                            className="bg-primary text-black font-bold px-6 py-2.5 rounded-lg shadow-md hover:shadow-lg hover:bg-primary-dark transition-all text-sm disabled:opacity-50"
+                            className="bg-primary text-black font-bold px-5 py-2 rounded-lg shadow-md hover:shadow-lg hover:bg-primary-dark transition-all text-sm disabled:opacity-50"
                             onClick={() => handleApproveDirectly(it)}
                             disabled={processingId === it.id}
                           >
@@ -389,7 +389,7 @@ function RequestsContent() {
                           </button>
                         )}
                         <button
-                          className="bg-white text-gray-700 font-semibold px-6 py-2.5 rounded-lg border-2 border-gray-200 hover:border-red-300 hover:text-red-600 transition-all text-sm disabled:opacity-50"
+                          className="bg-white text-gray-700 font-semibold px-5 py-2 rounded-lg border-2 border-gray-200 hover:border-red-300 hover:text-red-600 transition-all text-sm disabled:opacity-50"
                           onClick={() => setConfirmAction({ type: 'reject', item: it })}
                           disabled={processingId === it.id || celebratingIds.has(it.id)}
                         >
@@ -420,9 +420,9 @@ function RequestsContent() {
           ) : (
             <>
               {/* Mobile: Card View */}
-              <div className="block md:hidden space-y-6">
+              <div className="block md:hidden space-y-4">
                 {connectedItems.map((user) => (
-                  <div key={user.userId} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div key={user.userId} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
                     <div className="flex flex-col items-center text-center">
                       <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
                         {user.profilePhotoUrl ? (
@@ -471,9 +471,9 @@ function RequestsContent() {
               </div>
 
               {/* Desktop: List View */}
-              <div className="hidden md:block space-y-4">
+              <div className="hidden md:block space-y-3">
                 {connectedItems.map((user) => (
-                  <div key={user.userId} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow">
+                  <div key={user.userId} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start gap-4">
                       <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
                         {user.profilePhotoUrl ? (

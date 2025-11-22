@@ -19,6 +19,7 @@
   "dependencies": {
     "@strapi/plugin-graphql": "^5.0.0",
     "@strapi/plugin-users-permissions": "^5.0.0",
+    "@strapi/provider-email-nodemailer": "^5.31.2",
     "@strapi/strapi": "^5.0.0",
     "better-sqlite3": "^12.4.1",
     "pg": "^8.16.3",

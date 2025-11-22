@@ -41,7 +41,7 @@ input, select, textarea {
 
 /* Better touch targets for mobile */
 button, a {
-  min-height: 44px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -67,7 +67,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: #ffc510;
   color: #000000;
   font-weight: 700;
-  padding: 0.75rem 2.25rem;
+  padding: 0.5rem 1.5rem;
   border-radius: 0.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -96,7 +96,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: white;
   color: #374151;
   font-weight: 600;
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
   border-radius: 0.75rem;
   border: 2px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -123,7 +123,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.08),
     0 4px 12px rgba(0, 0, 0, 0.05);
-  padding: 2rem;
+  padding: 1rem;
   border: 1px solid rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -139,10 +139,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   border: 2px solid #e5e7eb;
   border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   background: white;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom select styling */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 9l4-4 4 4m0 6l-4 4-4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
 }
 
 /* Checkbox and Radio styles - Custom appearance */
@@ -248,7 +258,7 @@ a {
   background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
   border: 1px solid #6ee7b7;
   color: #065f46;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.75rem;
   font-weight: 500;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
@@ -258,7 +268,7 @@ a {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   border: 1px solid #fca5a5;
   color: #991b1b;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.75rem;
   font-weight: 500;
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
@@ -268,7 +278,7 @@ a {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   border: 1px solid #fcd34d;
   color: #92400e;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.75rem;
   font-weight: 500;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
@@ -278,7 +288,7 @@ a {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -362,7 +372,7 @@ a {
 }
 
 .pac-item {
-  padding: 12px 16px;
+  padding: 8px 12px;
   font-size: 16px;
   border-top: 1px solid #f3f4f6;
   cursor: pointer;
@@ -415,7 +425,7 @@ a {
 /* Divider */
 .divider {
   border-top: 1px solid #e5e7eb;
-  margin: 1.5rem 0;
+  margin: 1rem 0;
 }
 
 /* Text colors */

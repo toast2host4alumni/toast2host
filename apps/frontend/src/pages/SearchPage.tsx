@@ -20,7 +20,7 @@ function SearchContent() {
   const [universities, setUniversities] = useState<string[]>([])
   const [batchYear, setBatchYear] = useState<number | undefined>(undefined)
   const [sort, setSort] = useState<'proximity' | 'recent' | 'name'>('recent')
-  const [notConnectedOnly, setNotConnectedOnly] = useState(false)
+  const [notConnectedOnly, setNotConnectedOnly] = useState(true)
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
 
   // Auto-set filters based on search mode
@@ -68,7 +68,7 @@ function SearchContent() {
   const items = (data?.pages ?? []).flatMap((p) => p.items)
 
   return (
-    <main className="p-6 max-w-7xl mx-auto space-y-6">
+    <main className="p-3 max-w-7xl mx-auto space-y-4">
       {/* Header */}
       <div className="text-left">
         <h1 className="text-4xl font-black text-gray-900">Find Alumni</h1>
@@ -77,43 +77,40 @@ function SearchContent() {
 
       {/* Results */}
       <div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[500px]">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 min-h-[500px]">
           {/* Search Filters - Always visible */}
-          <div className="mb-6 pb-4 border-b border-gray-200 space-y-4">
-            {/* Row 1: University (full width) */}
-            <div>
-              {searchMode === 'all' ? (
-                <UniversityMultiSelect value={universities} onChange={setUniversities} label="Choose Alumni host from" />
-              ) : (
-                <UniversityCombobox value={university} onChange={onUniversityChange} label="Choose Alumni host from" />
-              )}
-            </div>
-
-            {/* Row 2: Location and Search Mode */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <LocationCombobox value={locationValue} onChange={onLocationChange} label="Where do you want to go?" />
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">Search Mode</label>
-                <select
-                  className="w-full border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-3 px-4 text-base"
-                  value={searchMode}
-                  onChange={(e) => setSearchMode(e.target.value as 'all' | 'same_university' | 'same_batch')}
-                >
-                  <option value="all">Across All Universities</option>
-                  <option value="same_university">From Same Alma Mater</option>
-                  <option value="same_batch">From Same Batch</option>
-                </select>
+          <div className="mb-4 pb-3 border-b border-gray-200 space-y-3">
+            {/* Row 1: Location (50%) | Search Mode + Batch Year (50%) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Left 50%: Location */}
+              <div>
+                <LocationCombobox value={locationValue} onChange={onLocationChange} label="Where do you want to go?" />
               </div>
-            </div>
 
-            {/* Mobile: Stacked filters */}
-            <div className="block md:hidden space-y-3">
+              {/* Right 50%: Search Mode + Batch Year */}
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Batch Year</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Search Mode</label>
+                  <div className="relative">
+                    <select
+                      className="w-full border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-2 px-3 pr-8 text-base appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.05)] bg-white !bg-none"
+                      value={searchMode}
+                      onChange={(e) => setSearchMode(e.target.value as 'all' | 'same_university' | 'same_batch')}
+                    >
+                      <option value="all">Across All Universities</option>
+                      <option value="same_university">From Same Alma Mater</option>
+                      <option value="same_batch">From Same Batch</option>
+                    </select>
+                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Batch Year</label>
                   <input
                     type="number"
-                    className="w-full text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-2 px-3"
+                    className="w-full border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-2 px-3 text-base shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
                     value={batchYear ?? ''}
                     onChange={(e) => setBatchYear(e.target.value ? Number(e.target.value) : undefined)}
                     placeholder="Any"
@@ -121,10 +118,23 @@ function SearchContent() {
                     max={2100}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Sort by</label>
+              </div>
+            </div>
+
+            {/* Row 2: University (only show when search mode is "all") */}
+            {searchMode === 'all' && (
+              <div>
+                <UniversityMultiSelect value={universities} onChange={setUniversities} label="Choose Alumni host from" />
+              </div>
+            )}
+
+            {/* Mobile: Additional filters */}
+            <div className="block md:hidden space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Sort by</label>
+                <div className="relative">
                   <select
-                    className="w-full text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-2"
+                    className="w-full text-sm border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-2 px-3 pr-8 appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.05)] bg-white !bg-none"
                     value={sort}
                     onChange={(e) => setSort(e.target.value as 'proximity' | 'recent' | 'name')}
                   >
@@ -132,6 +142,9 @@ function SearchContent() {
                     <option value="proximity">Proximity</option>
                     <option value="name">Name A-Z</option>
                   </select>
+                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                  </svg>
                 </div>
               </div>
 
@@ -141,17 +154,17 @@ function SearchContent() {
                 className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
               >
                 <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                  notConnectedOnly
+                  !notConnectedOnly
                     ? 'bg-primary border-primary'
                     : 'bg-white border-gray-300 group-hover:border-gray-400'
                 }`}>
-                  {notConnectedOnly && (
+                  {!notConnectedOnly && (
                     <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   )}
                 </span>
-                <span>Hide existing connections</span>
+                <span>Show existing connections</span>
               </button>
 
               <div className="flex items-center justify-center gap-2 pt-2">
@@ -167,40 +180,27 @@ function SearchContent() {
               </div>
             </div>
 
-            {/* Desktop: Row 2 - Batch Year, Hide Connections (left) | Found count (center) | Sort, View Toggle (right) */}
-            <div className="hidden md:flex flex-wrap items-center justify-between gap-4">
-              {/* Left: Batch Year + Hide Connections */}
+            {/* Desktop: Hide Connections (left) | Found count (center) | Sort, View Toggle (right) */}
+            <div className="hidden md:flex flex-wrap items-center justify-between gap-3 min-h-[40px]">
+              {/* Left: Show Connections */}
               <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-600">Batch Year:</label>
-                  <input
-                    type="number"
-                    className="w-24 text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-1.5 px-2"
-                    value={batchYear ?? ''}
-                    onChange={(e) => setBatchYear(e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="Any"
-                    min={1900}
-                    max={2100}
-                  />
-                </div>
-
                 <button
                   type="button"
                   onClick={() => setNotConnectedOnly(!notConnectedOnly)}
                   className="inline-flex items-center gap-3 text-sm font-medium text-gray-600 cursor-pointer select-none whitespace-nowrap hover:text-gray-900 transition-colors group"
                 >
                   <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                    notConnectedOnly
+                    !notConnectedOnly
                       ? 'bg-primary border-primary'
                       : 'bg-white border-gray-300 group-hover:border-gray-400'
                   }`}>
-                    {notConnectedOnly && (
+                    {!notConnectedOnly && (
                       <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                   </span>
-                  <span>Hide existing connections</span>
+                  <span>Show existing connections</span>
                 </button>
               </div>
 
@@ -218,11 +218,11 @@ function SearchContent() {
               </div>
 
               {/* Right: Sort + View Toggle */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-600">Sort by:</label>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-600">Sort by:</span>
+                  <div className="relative">
                   <select
-                    className="text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-primary py-1.5"
+                    className="text-sm border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-1.5 px-3 pr-8 appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.05)] bg-white !bg-none"
                     value={sort}
                     onChange={(e) => setSort(e.target.value as 'proximity' | 'recent' | 'name')}
                   >
@@ -230,6 +230,9 @@ function SearchContent() {
                     <option value="proximity">Proximity</option>
                     <option value="name">Name A-Z</option>
                   </select>
+                  <svg className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                  </svg>
                 </div>
 
                 <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -276,11 +279,11 @@ function SearchContent() {
             <>
               <SearchResults items={items} onAfterConnect={() => refetch()} viewMode={viewMode} />
               {hasNextPage && (
-                <div className="mt-8 flex justify-center">
+                <div className="mt-6 flex justify-center">
                   <button
                     onClick={() => fetchNextPage()}
                     disabled={isFetching}
-                    className="bg-white text-gray-900 font-semibold px-8 py-3 rounded-xl border-2 border-gray-200 hover:border-primary transition-all disabled:opacity-50"
+                    className="bg-white text-gray-900 font-semibold px-6 py-2.5 rounded-xl border-2 border-gray-200 hover:border-primary transition-all disabled:opacity-50"
                   >
                     {isFetching ? 'Loading...' : 'Load more results'}
                   </button>
