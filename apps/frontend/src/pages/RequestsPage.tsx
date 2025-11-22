@@ -38,7 +38,28 @@ function RequestsContent() {
     setLoading(false)
   }
 
+  // Load data on mount
   useEffect(() => { load() }, [])
+
+  // Reload data when tab changes
+  useEffect(() => {
+    if (activeTab === 'pending') {
+      loadPending()
+    } else {
+      loadConnected()
+    }
+  }, [activeTab])
+
+  // Reload when page becomes visible (user returns to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        load()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   const handleApproveDirectly = async (item: PendingConnection) => {
     setProcessingId(item.id)
