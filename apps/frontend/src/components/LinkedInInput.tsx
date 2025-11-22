@@ -57,6 +57,11 @@ export default function LinkedInInput({ value = '', onChange, error }: LinkedInI
       return ''
     }
 
+    // Ensure normalized starts with /
+    if (!normalized.startsWith('/')) {
+      normalized = '/' + normalized
+    }
+
     // Return full URL
     return LINKEDIN_PREFIX + normalized
   }

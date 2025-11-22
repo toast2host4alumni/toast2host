@@ -19,6 +19,7 @@
   "dependencies": {
     "@strapi/plugin-graphql": "^5.0.0",
     "@strapi/plugin-users-permissions": "^5.0.0",
+    "@strapi/provider-email-nodemailer": "^5.31.2",
     "@strapi/strapi": "^5.0.0",
     "better-sqlite3": "^12.4.1",
     "pg": "^8.16.3",
@@ -29,6 +30,8 @@
   },
   "devDependencies": {
     "@types/koa": "^3.0.1",
+    "@types/koa-compose": "^3.2.9",
+    "@types/koa-session": "^6.4.5",
     "@types/node": "^22.0.0",
     "rimraf": "^6.1.0",
     "ts-node": "^10.9.2",

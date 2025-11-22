@@ -1,47 +1,26 @@
 {
   "compilerOptions": {
     "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "lib": [
-      "DOM",
-      "ES2022"
-    ],
-    "strict": true,
-    "jsx": "react-jsx",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "noEmit": true,
     "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "@/components/*": [
-        "src/components/*"
-      ],
-      "@/lib/*": [
-        "src/lib/*"
-      ],
-      "@/hooks/*": [
-        "src/hooks/*"
-      ]
-    },
-    "allowJs": true,
-    "incremental": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+      "@/*": ["./src/*"]
+    }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src"]
 }

@@ -1,7 +1,5 @@
-'use client'
-
 import { useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 
@@ -12,8 +10,8 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children, fallback, requireOnboarding = true }: AuthGuardProps) {
-  const router = useRouter()
-  const pathname = usePathname()
+  const navigate = useNavigate()
+  const location = useLocation()
   const isAuthed = isAuthenticated()
   const { data: user, isLoading, isError } = useCurrentUser()
 
@@ -21,18 +19,18 @@ export default function AuthGuard({ children, fallback, requireOnboarding = true
 
   useEffect(() => {
     if (!isAuthed) {
-      router.replace('/signin')
+      navigate('/signin', { replace: true })
       return
     }
 
     if (requireOnboarding && !isLoading) {
       if (isError || !isOnboarded) {
-        if (pathname !== '/onboarding') {
-          router.replace('/onboarding')
+        if (location.pathname !== '/onboarding') {
+          navigate('/onboarding', { replace: true })
         }
       }
     }
-  }, [router, pathname, requireOnboarding, isAuthed, isLoading, isError, isOnboarded])
+  }, [navigate, location.pathname, requireOnboarding, isAuthed, isLoading, isError, isOnboarded])
 
   // Show loading state while checking auth
   if (!isAuthed || (requireOnboarding && isLoading)) {

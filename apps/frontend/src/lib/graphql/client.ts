@@ -1,10 +1,10 @@
 import { createClient, cacheExchange, fetchExchange } from 'urql'
 import { getAuthToken } from '@/lib/auth'
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL
+const STRAPI_URL = import.meta.env.VITE_STRAPI_URL
 
 if (!STRAPI_URL) {
-  throw new Error('NEXT_PUBLIC_STRAPI_URL is not defined')
+  throw new Error('VITE_STRAPI_URL is not defined')
 }
 
 export const graphqlClient = createClient({

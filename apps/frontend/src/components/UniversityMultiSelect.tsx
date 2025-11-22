@@ -85,11 +85,12 @@ export default function UniversityMultiSelect({ value = [], onChange, label = 'U
           <PopoverTrigger asChild>
             <Button
               variant="outline"
+              size="none"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-start text-left font-normal gap-0 min-h-[50px] h-auto px-4 py-2 border-2 border-gray-200 hover:border-gray-300 text-base"
+              className="w-full justify-start text-left font-normal gap-0 min-h-[40px] h-auto px-3 py-1.5 border-2 border-gray-200 hover:border-gray-300 text-base shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
             >
-              <div className="flex-1 flex flex-wrap gap-2 py-1">
+              <div className="flex-1 flex flex-wrap gap-2 py-0.5">
                 {value.length === 0 ? (
                   <span className="text-gray-400">Select universities...</span>
                 ) : (
@@ -127,7 +128,7 @@ export default function UniversityMultiSelect({ value = [], onChange, label = 'U
               value={search}
               onValueChange={setSearch}
             />
-            <CommandList>
+            <CommandList className="max-h-60">
               {loading && (
                 <CommandEmpty>
                   <div className="flex items-center justify-center gap-2">
@@ -158,7 +159,7 @@ export default function UniversityMultiSelect({ value = [], onChange, label = 'U
                       key={`${university.name}-${university.state ?? ''}`}
                       value={university.name}
                       onSelect={() => handleSelect(university.name)}
-                      className="text-base py-3"
+                      className="text-base py-2"
                     >
                       <Check
                         className={cn(

@@ -141,6 +141,13 @@ const searchResolvers = {
           proximityMiles = p._dist !== undefined ? p._dist : haversine(lat, lng, p.location_lat, p.location_lng)
         }
 
+        // Prepend backend URL to local image paths
+        let profilePhotoUrl = p.profile_photo_url || null
+        if (profilePhotoUrl && profilePhotoUrl.startsWith('/uploads/')) {
+          const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
+          profilePhotoUrl = `${serverUrl}${profilePhotoUrl}`
+        }
+
         return {
           userId: String(uid || ''),
           name: fullName,
@@ -148,7 +155,7 @@ const searchResolvers = {
           location: p.location_text,
           connectionStatus: status,
           email: status === 'connected' ? p.user?.email || null : null,
-          profilePhotoUrl: p.profile_photo_url || null,
+          profilePhotoUrl,
           batchYear: p.batch_year || null,
           proximityMiles: proximityMiles,
         }

@@ -21,6 +21,7 @@ export default [
       origin: [
         'http://localhost:3000',
         'http://localhost:1337',
+        'https://app.toast2host.net',
       ],
       credentials: true,
       headers: '*',
@@ -30,7 +31,17 @@ export default [
   'strapi::logger',
   'strapi::query',
   'strapi::body',
-  'strapi::session',
+  {
+    name: 'strapi::session',
+    config: {
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        httpOnly: true,
+      },
+      proxy: true, // Trust proxy headers for secure cookies
+    },
+  },
   'strapi::favicon',
   'strapi::public',
 ];
