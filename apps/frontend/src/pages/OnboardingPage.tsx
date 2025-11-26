@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { onboardingSchema, type OnboardingInput } from '@/lib/validation/profile'
 import UniversityCombobox from '@/components/UniversityCombobox'
 import LocationCombobox, { type LocationValue } from '@/components/LocationCombobox'
-import LinkedInInput from '@/components/LinkedInInput'
 import { updateMyProfile } from '@/lib/graphql/operations'
 import { useNavigate } from 'react-router-dom'
 import AuthGuard from '@/components/AuthGuard'
@@ -177,14 +176,8 @@ function OnboardingContent() {
             )}
           </div>
 
-          <LinkedInInput
-            value={watch('linkedin_url')}
-            onChange={(value) => setValue('linkedin_url', value)}
-            error={errors.linkedin_url?.message}
-          />
-
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">Batch Year (optional)</label>
+            <label className="block text-sm font-semibold text-gray-700">Batch Year</label>
             <input
               className="w-full"
               type="number"

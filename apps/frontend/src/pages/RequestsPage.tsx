@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
-import { approveConnection, getMyPendingConnections, rejectConnection, getMyConnections, type PendingConnection, type ConnectedUser } from '@/lib/graphql/operations'
+import { useLocation } from 'react-router-dom'
+import { approveConnection, getMyPendingConnections, getMyOutgoingPendingConnections, rejectConnection, getMyConnections, type PendingConnection, type OutgoingPendingConnection, type ConnectedUser } from '@/lib/graphql/operations'
 import AuthGuard from '@/components/AuthGuard'
 import { toast } from 'sonner'
 
 function RequestsContent() {
-  const [activeTab, setActiveTab] = useState<'pending' | 'connected'>('pending')
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState<'approve' | 'outgoing' | 'connected'>('approve')
   const [pendingItems, setPendingItems] = useState<PendingConnection[]>([])
+  const [outgoingItems, setOutgoingItems] = useState<OutgoingPendingConnection[]>([])
   const [connectedItems, setConnectedItems] = useState<ConnectedUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -22,6 +25,15 @@ function RequestsContent() {
     }
   }
 
+  async function loadOutgoing() {
+    try {
+      const list = await getMyOutgoingPendingConnections()
+      setOutgoingItems(list)
+    } catch {
+      setError('Failed to load outgoing requests')
+    }
+  }
+
   async function loadConnected() {
     try {
       const list = await getMyConnections()
@@ -34,17 +46,24 @@ function RequestsContent() {
   async function load() {
     setLoading(true)
     setError(null)
-    await Promise.all([loadPending(), loadConnected()])
+    await Promise.all([loadPending(), loadOutgoing(), loadConnected()])
     setLoading(false)
   }
 
   // Load data on mount
   useEffect(() => { load() }, [])
 
+  // Reload ALL data when navigating to this page
+  useEffect(() => {
+    load()
+  }, [location.pathname])
+
   // Reload data when tab changes
   useEffect(() => {
-    if (activeTab === 'pending') {
+    if (activeTab === 'approve') {
       loadPending()
+    } else if (activeTab === 'outgoing') {
+      loadOutgoing()
     } else {
       loadConnected()
     }
@@ -198,20 +217,20 @@ function RequestsContent() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-200">
         <button
-          onClick={() => setActiveTab('pending')}
+          onClick={() => setActiveTab('approve')}
           className={`px-4 py-2 font-semibold transition-colors relative ${
-            activeTab === 'pending'
+            activeTab === 'approve'
               ? 'text-primary'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          Pending Requests
+          Requests to Approve
           {pendingItems.length > 0 && (
             <span className="ml-2 bg-primary text-black text-xs font-bold px-2 py-0.5 rounded-full">
               {pendingItems.length}
             </span>
           )}
-          {activeTab === 'pending' && (
+          {activeTab === 'approve' && (
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
           )}
         </button>
@@ -233,6 +252,24 @@ function RequestsContent() {
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
           )}
         </button>
+        <button
+          onClick={() => setActiveTab('outgoing')}
+          className={`px-4 py-2 font-semibold transition-colors relative ${
+            activeTab === 'outgoing'
+              ? 'text-primary'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          My Pending Requests
+          {outgoingItems.length > 0 && (
+            <span className="ml-2 bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">
+              {outgoingItems.length}
+            </span>
+          )}
+          {activeTab === 'outgoing' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+          )}
+        </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 min-h-[400px]">
@@ -251,7 +288,7 @@ function RequestsContent() {
             </svg>
             {error}
           </div>
-        ) : activeTab === 'pending' ? (
+        ) : activeTab === 'approve' ? (
           pendingItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-500">
               <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full flex items-center justify-center mb-4">
@@ -419,6 +456,127 @@ function RequestsContent() {
                           </svg>
                           Reject
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )
+        ) : activeTab === 'outgoing' ? (
+          // Outgoing Pending Tab
+          outgoingItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <div className="w-20 h-20 bg-gradient-to-br from-yellow-100 to-yellow-50 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-lg font-semibold text-gray-700 mb-1">No pending requests</p>
+              <p className="text-sm">Your sent connection requests will appear here</p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile: Card View */}
+              <div className="block md:hidden space-y-4">
+                {outgoingItems.map((it) => (
+                  <div key={it.id} className="bg-white rounded-xl border border-yellow-200 shadow-sm p-4">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
+                        {it.targetUser.profilePhotoUrl ? (
+                          <img src={it.targetUser.profilePhotoUrl} alt={it.targetUser.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-yellow-100 to-yellow-50 flex items-center justify-center">
+                            <span className="text-2xl font-bold text-yellow-600">{it.targetUser.name.charAt(0).toUpperCase()}</span>
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-lg mb-1">{it.targetUser.name}</h3>
+                      <span className="text-xs text-gray-500 mb-2">Sent {formatDate(it.createdAt)}</span>
+                      {it.targetUser.university && (
+                        <p className="text-sm text-gray-600 mb-1">
+                          {it.targetUser.university}
+                          {it.targetUser.batchYear && ` - ${it.targetUser.batchYear}`}
+                        </p>
+                      )}
+                      {it.targetUser.location && (
+                        <p className="text-sm text-gray-500 flex items-center justify-center gap-1 mb-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          {it.targetUser.location}
+                        </p>
+                      )}
+                      {it.targetUser.linkedinUrl && (
+                        <a href={it.targetUser.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                          </svg>
+                          View LinkedIn
+                        </a>
+                      )}
+                      <span className="inline-flex items-center justify-center py-2 px-4 rounded-lg bg-yellow-50 text-yellow-700 text-sm font-medium mt-2">
+                        <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                        Pending
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: List View */}
+              <div className="hidden md:block space-y-3">
+                {outgoingItems.map((it) => (
+                  <div key={it.id} className="bg-white rounded-xl border border-yellow-200 shadow-sm p-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+                        {it.targetUser.profilePhotoUrl ? (
+                          <img src={it.targetUser.profilePhotoUrl} alt={it.targetUser.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-yellow-100 to-yellow-50 flex items-center justify-center">
+                            <span className="text-xl font-bold text-yellow-600">{it.targetUser.name.charAt(0).toUpperCase()}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-gray-900 text-lg truncate">{it.targetUser.name}</h3>
+                          <span className="text-xs text-gray-500">Sent {formatDate(it.createdAt)}</span>
+                        </div>
+                        {it.targetUser.university && (
+                          <p className="text-sm text-gray-600 mb-1">
+                            {it.targetUser.university}
+                            {it.targetUser.batchYear && ` - Class of ${it.targetUser.batchYear}`}
+                          </p>
+                        )}
+                        {it.targetUser.location && (
+                          <p className="text-sm text-gray-500 flex items-center gap-1 mb-2">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {it.targetUser.location}
+                          </p>
+                        )}
+                        {it.targetUser.linkedinUrl && (
+                          <a href={it.targetUser.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                            View LinkedIn
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex-shrink-0">
+                        <span className="inline-flex items-center justify-center py-2 px-4 rounded-lg bg-yellow-50 text-yellow-700 text-sm font-medium">
+                          <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                          </svg>
+                          Pending
+                        </span>
                       </div>
                     </div>
                   </div>

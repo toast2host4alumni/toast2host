@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Connection Request - Toast2Host</title>
+  <title>Connection Approved - Toast2Host</title>
   <style>
     body {
       margin: 0;
@@ -44,6 +44,19 @@
       color: #374151;
       margin-bottom: 16px;
     }
+    .highlight-box {
+      background-color: #f0fdf4;
+      border-left: 4px solid #10b981;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+    .highlight-text {
+      font-size: 17px;
+      font-weight: 600;
+      color: #059669;
+      margin: 0;
+    }
     .profile-card {
       background: transparent;
       border-radius: 0;
@@ -67,6 +80,17 @@
       font-weight: 600;
       color: #111827;
     }
+    .contact-info {
+      background-color: #f9fafb;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+    .email-link {
+      color: #0077b5;
+      text-decoration: none;
+      font-weight: 600;
+    }
     .button-container {
       text-align: center;
       margin: 32px 0;
@@ -87,13 +111,6 @@
     .button:hover {
       background-color: #ffb800;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    .linkedin-link {
-      display: inline-block;
-      color: #0077b5;
-      text-decoration: none;
-      font-weight: 600;
-      margin-top: 16px;
     }
     .footer {
       background-color: #000000;
@@ -124,53 +141,57 @@
 
     <!-- Main Content -->
     <div class="content">
-      <div class="greeting">Dear {{HOST_FIRST_NAME}},</div>
+      <div class="greeting">Hi {{GUEST_FIRST_NAME}},</div>
 
-      <div class="message">
-        I came across your profile on the Toast2Host platform.
+      <!-- Success Highlight -->
+      <div class="highlight-box">
+        <p class="highlight-text">🎉 Great news! {{HOST_FULL_NAME}} has accepted your connection request!</p>
       </div>
 
       <div class="message">
-        I'm an alumnus of <strong>{{GUEST_UNIVERSITY}}</strong>, from the <strong>{{GUEST_BATCH}}</strong> batch.
+        You can now reach out directly and start building a meaningful connection with {{HOST_FULL_NAME}}.
       </div>
 
-      <div class="message">
-        I'd love to connect with you, share experiences, and explore how we can support each other through this alumni network.
-      </div>
-
-      <!-- Guest Profile Card -->
+      <!-- Host Profile Card -->
       <div class="profile-card">
         <div class="profile-info">
-          <div class="profile-label">Connection Request From</div>
-          <div class="profile-value">{{GUEST_FULL_NAME}}</div>
+          <div class="profile-label">Connected With</div>
+          <div class="profile-value">{{HOST_FULL_NAME}}</div>
         </div>
-        {{#if GUEST_LINKEDIN}}
         <div class="profile-info">
-          <div class="profile-label">LinkedIn Profile</div>
-          <a href="{{GUEST_LINKEDIN}}" class="linkedin-link">View LinkedIn Profile →</a>
+          <div class="profile-label">University</div>
+          <div class="profile-value">{{HOST_UNIVERSITY}}</div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-label">Batch Year</div>
+          <div class="profile-value">{{HOST_BATCH}}</div>
+        </div>
+        {{#if HOST_LOCATION}}
+        <div class="profile-info">
+          <div class="profile-label">Location</div>
+          <div class="profile-value">{{HOST_LOCATION}}</div>
         </div>
         {{/if}}
       </div>
 
       <div class="divider"></div>
 
-      <div class="message" style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; margin: 24px 0;">
-        <strong style="color: #92400e;">⚠️ Important:</strong> Before approving this connection request, we recommend verifying the requester's identity through their LinkedIn profile to ensure authenticity and build trust within our alumni community.
+      <!-- Contact Information -->
+      <div class="contact-info">
+        <div class="profile-label">Contact Email</div>
+        <div style="margin-top: 8px;">
+          <a href="mailto:{{HOST_EMAIL}}" class="email-link">{{HOST_EMAIL}}</a>
+        </div>
       </div>
 
       <div class="message">
-        Looking forward to your response and kind approval of the connection request.
-      </div>
-
-      <div class="message" style="margin-top: 24px; font-weight: 600;">
-        Warm regards,<br>
-        {{GUEST_FIRST_NAME}}
+        Feel free to reach out and introduce yourself. We're excited to see how this connection grows!
       </div>
 
       <!-- CTA Button -->
       <div class="button-container">
         <a href="{{CONNECTIONS_URL}}" class="button" style="display: inline-block; background-color: #ffc510; color: #000000; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); border: none;">
-          <span style="color: #000000; text-decoration: none;">View Connection Request</span>
+          <span style="color: #000000; text-decoration: none;">View My Connections</span>
         </a>
       </div>
     </div>

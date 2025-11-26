@@ -237,14 +237,17 @@ function ProfileContent() {
           )}
         </div>
 
-        <LinkedInInput
-          value={watch('linkedin_url')}
-          onChange={(value) => setValue('linkedin_url', value)}
-          error={errors.linkedin_url?.message}
-        />
+        <div className="space-y-2">
+          <LinkedInInput
+            value={watch('linkedin_url')}
+            onChange={(value) => setValue('linkedin_url', value)}
+            error={errors.linkedin_url?.message}
+          />
+          <p className="text-sm text-green-600 font-semibold">✨ Adds Credibility!!!</p>
+        </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700">Batch Year (optional)</label>
+          <label className="block text-sm font-semibold text-gray-700">Batch Year</label>
           <input
             className="w-full"
             type="number"
