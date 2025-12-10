@@ -7,13 +7,50 @@ type Args = {
   universities?: string[] | null
   batch_year?: number | null
   sort?: 'proximity' | 'recent' | 'name' | null
-  not_connected_only?: boolean | null
+  connected_only?: boolean | null
   name?: string | null
   page?: number | null
   pageSize?: number | null
+  hosts_only?: boolean | null
 }
 
 const toNumber = (v: any) => (typeof v === 'number' ? v : v ? Number(v) : undefined)
+
+// US state name to abbreviation mapping
+const US_STATE_MAP: Record<string, string> = {
+  'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA',
+  'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA',
+  'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA',
+  'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
+  'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO',
+  'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+  'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH',
+  'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+  'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT',
+  'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY'
+}
+
+// Country name variations mapping (full name -> common variations)
+const COUNTRY_MAP: Record<string, string[]> = {
+  'United States': ['USA', 'US', 'United States', 'United States of America'],
+  'United Kingdom': ['UK', 'GB', 'United Kingdom', 'Great Britain'],
+  'Canada': ['Canada', 'CA'],
+  'Australia': ['Australia', 'AU'],
+  'India': ['India', 'IN'],
+  'Germany': ['Germany', 'DE', 'Deutschland'],
+  'France': ['France', 'FR'],
+  'China': ['China', 'CN'],
+  'Japan': ['Japan', 'JP'],
+  'Brazil': ['Brazil', 'BR'],
+  'Mexico': ['Mexico', 'MX'],
+  'South Korea': ['South Korea', 'Korea', 'KR'],
+  'Italy': ['Italy', 'IT'],
+  'Spain': ['Spain', 'ES'],
+  'Netherlands': ['Netherlands', 'NL'],
+  'Switzerland': ['Switzerland', 'CH'],
+  'Singapore': ['Singapore', 'SG'],
+  'New Zealand': ['New Zealand', 'NZ'],
+}
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 3958.8 // miles
@@ -23,7 +60,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
 }
@@ -38,6 +75,9 @@ const searchResolvers = {
       }
 
       const filters: any = {}
+
+      // Only show profiles that have completed onboarding
+      filters.onboarding_completed = true
 
       // Exclude the currently logged-in user from search results
       const actorId = ctx?.state?.user?.id
@@ -56,6 +96,11 @@ const searchResolvers = {
 
       if (args.batch_year) filters.batch_year = { $eq: args.batch_year }
 
+      // Filter for hosts only
+      if (args.hosts_only) {
+        filters.host_mode = true
+      }
+
       // Location filters
       const lat = toNumber(args.lat)
       const lng = toNumber(args.lng)
@@ -65,8 +110,36 @@ const searchResolvers = {
         const dLng = miles / (Math.cos((lat * Math.PI) / 180) * 69)
         filters.location_lat = { $gte: lat - dLat, $lte: lat + dLat }
         filters.location_lng = { $gte: lng - dLng, $lte: lng + dLng }
-      } else if ((args.scope === 'state' || args.scope === 'country') && args.location) {
-        filters.location_text = { $containsi: args.location }
+      } else if (args.scope === 'state' && args.location) {
+        // State search: match state name or abbreviation in location_text
+        // Format: "City, STATE_ABBREV, Country" (e.g., "San Francisco, CA, USA")
+        // Google Places sends "California, USA" but DB has "City, CA, USA"
+
+        // Extract state name from location (remove country)
+        const locationParts = args.location.split(',').map(s => s.trim())
+        const stateName = locationParts[0] // "California" from "California, USA"
+
+        // Get state abbreviation if available
+        const stateAbbrev = US_STATE_MAP[stateName]
+
+        // Search for both full state name and abbreviation
+        filters.$or = [
+          { location_text: { $containsi: stateName } },  // "California" or "New York"
+          ...(stateAbbrev ? [{ location_text: { $containsi: `, ${stateAbbrev},` } }] : [])  // ", CA," or ", NY,"
+        ]
+      } else if (args.scope === 'country' && args.location) {
+        // Country search: match country name or common variations
+        // Google Places sends "United States" but DB might have "USA"
+        // Extract country name from location (e.g., "United States" from "United States")
+        const countryName = args.location.split(',')[0].trim()
+
+        // Get country variations from map, or use the country name as-is
+        const countryVariations = COUNTRY_MAP[countryName] || [countryName]
+
+        // Search for any of the country variations
+        filters.$or = countryVariations.map(variation => ({
+          location_text: { $containsi: variation }
+        }))
       }
 
       // Base query with populate to get user relation
@@ -158,12 +231,60 @@ const searchResolvers = {
           profilePhotoUrl,
           batchYear: p.batch_year || null,
           proximityMiles: proximityMiles,
+          hostMode: p.host_mode || false,
+          // Store visibility and batch/university for post-filtering
+          _profileVisibility: p.profile_visibility || 'everyone',
+          _profileUniversity: p.university_name,
+          _profileBatchYear: p.batch_year,
         }
       })
 
-      if (args.not_connected_only && actorId) {
-        results = results.filter((r) => r.connectionStatus === 'none')
+      // Filter by connection status if requested
+      if (args.connected_only && actorId) {
+        results = results.filter((r) => r.connectionStatus === 'connected')
       }
+
+      // Filter by profile visibility
+      // Get current user's profile for visibility matching
+      if (actorId) {
+        const actorProfiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
+          filters: { user: actorId },
+          limit: 1,
+        })
+        const actorProfile = Array.isArray(actorProfiles) ? actorProfiles[0] : null
+        const actorUniversity = actorProfile?.university_name
+        const actorBatchYear = actorProfile?.batch_year
+
+        results = results.filter((r: any) => {
+          const visibility = r._profileVisibility
+          if (visibility === 'everyone') return true
+          if (visibility === 'same_university') {
+            return actorUniversity && r._profileUniversity &&
+              actorUniversity.toLowerCase() === r._profileUniversity.toLowerCase()
+          }
+          if (visibility === 'same_batch') {
+            return actorBatchYear && r._profileBatchYear &&
+              actorBatchYear === r._profileBatchYear
+          }
+          return true
+        })
+      }
+
+      // Sort connected users first by default (unless filtering to connected_only)
+      if (!args.connected_only && actorId) {
+        results.sort((a, b) => {
+          // Connected users first
+          if (a.connectionStatus === 'connected' && b.connectionStatus !== 'connected') return -1
+          if (a.connectionStatus !== 'connected' && b.connectionStatus === 'connected') return 1
+          return 0
+        })
+      }
+
+      // Clean up internal fields before returning
+      results = results.map((r: any) => {
+        const { _profileVisibility, _profileUniversity, _profileBatchYear, ...clean } = r
+        return clean
+      })
 
       return results
     },

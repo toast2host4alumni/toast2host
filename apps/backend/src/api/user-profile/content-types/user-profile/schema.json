@@ -15,18 +15,63 @@
       "relation": "oneToOne",
       "target": "plugin::users-permissions.user"
     },
-    "first_name": { "type": "string" },
-    "last_name": { "type": "string" },
-    "profile_photo_url": { "type": "string" },
-    "university_name": { "type": "string" },
-    "university_external_id": { "type": "string" },
-    "linkedin_url": { "type": "string" },
-    "location_text": { "type": "string" },
-    "location_lat": { "type": "decimal" },
-    "location_lng": { "type": "decimal" },
-    "location_scope": { "type": "enumeration", "enum": ["city", "state", "country"] },
-    "batch_year": { "type": "integer" },
-    "onboarding_completed": { "type": "boolean", "default": false }
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "profile_photo_url": {
+      "type": "string"
+    },
+    "university_name": {
+      "type": "string"
+    },
+    "university_external_id": {
+      "type": "string"
+    },
+    "linkedin_url": {
+      "type": "string"
+    },
+    "location_text": {
+      "type": "string"
+    },
+    "location_lat": {
+      "type": "decimal"
+    },
+    "location_lng": {
+      "type": "decimal"
+    },
+    "location_scope": {
+      "type": "enumeration",
+      "enum": [
+        "city",
+        "state",
+        "country"
+      ]
+    },
+    "batch_year": {
+      "type": "integer"
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "host_mode": {
+      "type": "boolean",
+      "default": false
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "profile_visibility": {
+      "type": "enumeration",
+      "enum": [
+        "everyone",
+        "same_university",
+        "same_batch"
+      ],
+      "default": "everyone"
+    }
   }
 }
-

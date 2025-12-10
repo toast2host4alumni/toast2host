@@ -47,6 +47,13 @@ button, a {
   justify-content: center;
 }
 
+/* Toggle switch override */
+.toggle-switch {
+  min-height: auto;
+  display: block;
+  position: relative;
+}
+
 /* Safe area for mobile devices with notches */
 @supports (padding: max(0px)) {
   body {

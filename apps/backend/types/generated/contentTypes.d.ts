@@ -637,6 +637,7 @@ export interface ApiUserProfileUserProfile extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     first_name: Schema.Attribute.String;
+    host_mode: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     last_name: Schema.Attribute.String;
     linkedin_url: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -651,7 +652,12 @@ export interface ApiUserProfileUserProfile extends Struct.CollectionTypeSchema {
     location_text: Schema.Attribute.String;
     onboarding_completed: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
+    phone_number: Schema.Attribute.String;
     profile_photo_url: Schema.Attribute.String;
+    profile_visibility: Schema.Attribute.Enumeration<
+      ['everyone', 'same_university', 'same_batch']
+    > &
+      Schema.Attribute.DefaultTo<'everyone'>;
     publishedAt: Schema.Attribute.DateTime;
     university_external_id: Schema.Attribute.String;
     university_name: Schema.Attribute.String;

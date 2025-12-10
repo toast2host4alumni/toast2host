@@ -11,6 +11,9 @@ type UpdateProfileInput = {
   location_scope?: 'city' | 'state' | 'country'
   batch_year?: number
   onboarding_completed?: boolean
+  host_mode?: boolean
+  phone_number?: string
+  profile_visibility?: 'everyone' | 'same_university' | 'same_batch'
 }
 
 type GQLCtx = { state: { user?: { id: number } } }

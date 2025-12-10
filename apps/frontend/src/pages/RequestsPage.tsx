@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { approveConnection, getMyPendingConnections, getMyOutgoingPendingConnections, rejectConnection, getMyConnections, type PendingConnection, type OutgoingPendingConnection, type ConnectedUser } from '@/lib/graphql/operations'
 import AuthGuard from '@/components/AuthGuard'
@@ -50,6 +50,9 @@ function RequestsContent() {
     setLoading(false)
   }
 
+  // Track if we should skip the next reload (after an action)
+  const skipReloadUntilRef = useRef<number>(0)
+
   // Load data on mount
   useEffect(() => { load() }, [])
 
@@ -58,21 +61,21 @@ function RequestsContent() {
     load()
   }, [location.pathname])
 
-  // Reload data when tab changes
+  // Reload ALL data when tab changes, but skip if we just performed an action
   useEffect(() => {
-    if (activeTab === 'approve') {
-      loadPending()
-    } else if (activeTab === 'outgoing') {
-      loadOutgoing()
-    } else {
-      loadConnected()
+    // Skip reload if we're within the skip window (just performed an action)
+    if (Date.now() < skipReloadUntilRef.current) {
+      return
     }
+
+    // Reload all data so badge counts update for all tabs
+    load()
   }, [activeTab])
 
   // Reload when page becomes visible (user returns to tab)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
+      if (!document.hidden && Date.now() >= skipReloadUntilRef.current) {
         load()
       }
     }
@@ -90,6 +93,9 @@ function RequestsContent() {
 
       // Remove from pending immediately
       setPendingItems(prev => prev.filter(p => p.id !== item.id))
+
+      // Skip any reloads for the next 5 seconds to preserve optimistic update
+      skipReloadUntilRef.current = Date.now() + 5000
 
       // Add to connected list
       const newConnection: ConnectedUser = {
@@ -179,7 +185,7 @@ function RequestsContent() {
                   className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                   </svg>
                   Review LinkedIn Profile
                 </a>
@@ -194,11 +200,10 @@ function RequestsContent() {
               </button>
               <button
                 onClick={confirmAction.type === 'approve' ? handleApprove : handleReject}
-                className={`px-6 py-2 rounded-lg font-bold ${
-                  confirmAction.type === 'approve'
-                    ? 'bg-primary text-black hover:bg-primary-dark'
-                    : 'bg-red-500 text-white hover:bg-red-600'
-                }`}
+                className={`px-6 py-2 rounded-lg font-bold ${confirmAction.type === 'approve'
+                  ? 'bg-primary text-black hover:bg-primary-dark'
+                  : 'bg-red-500 text-white hover:bg-red-600'
+                  }`}
               >
                 {confirmAction.type === 'approve' ? 'Approve' : 'Reject'}
               </button>
@@ -218,11 +223,10 @@ function RequestsContent() {
       <div className="flex gap-2 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('approve')}
-          className={`px-4 py-2 font-semibold transition-colors relative ${
-            activeTab === 'approve'
-              ? 'text-primary'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
+          className={`px-4 py-2 font-semibold transition-colors relative ${activeTab === 'approve'
+            ? 'text-primary'
+            : 'text-gray-500 hover:text-gray-700'
+            }`}
         >
           Requests to Approve
           {pendingItems.length > 0 && (
@@ -236,11 +240,10 @@ function RequestsContent() {
         </button>
         <button
           onClick={() => setActiveTab('connected')}
-          className={`px-4 py-2 font-semibold transition-colors relative ${
-            activeTab === 'connected'
-              ? 'text-primary'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
+          className={`px-4 py-2 font-semibold transition-colors relative ${activeTab === 'connected'
+            ? 'text-primary'
+            : 'text-gray-500 hover:text-gray-700'
+            }`}
         >
           My Connections
           {connectedItems.length > 0 && (
@@ -254,11 +257,10 @@ function RequestsContent() {
         </button>
         <button
           onClick={() => setActiveTab('outgoing')}
-          className={`px-4 py-2 font-semibold transition-colors relative ${
-            activeTab === 'outgoing'
-              ? 'text-primary'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
+          className={`px-4 py-2 font-semibold transition-colors relative ${activeTab === 'outgoing'
+            ? 'text-primary'
+            : 'text-gray-500 hover:text-gray-700'
+            }`}
         >
           My Pending Requests
           {outgoingItems.length > 0 && (
@@ -335,7 +337,7 @@ function RequestsContent() {
                       {it.requester.linkedinUrl && (
                         <a href={it.requester.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                           </svg>
                           View LinkedIn
                         </a>
@@ -409,7 +411,7 @@ function RequestsContent() {
                         {it.requester.linkedinUrl && (
                           <a href={it.requester.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                             </svg>
                             View LinkedIn
                           </a>
@@ -511,7 +513,7 @@ function RequestsContent() {
                       {it.targetUser.linkedinUrl && (
                         <a href={it.targetUser.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                           </svg>
                           View LinkedIn
                         </a>
@@ -564,7 +566,7 @@ function RequestsContent() {
                         {it.targetUser.linkedinUrl && (
                           <a href={it.targetUser.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                             </svg>
                             View LinkedIn
                           </a>
@@ -633,7 +635,7 @@ function RequestsContent() {
                       {user.linkedinUrl && (
                         <a href={user.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                           </svg>
                           View LinkedIn
                         </a>
@@ -687,7 +689,7 @@ function RequestsContent() {
                         {user.linkedinUrl && (
                           <a href={user.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                             </svg>
                             View LinkedIn
                           </a>

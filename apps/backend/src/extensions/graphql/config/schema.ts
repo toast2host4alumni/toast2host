@@ -26,6 +26,9 @@ const typeDefs = /* GraphQL */ `
     location_scope: String
     batch_year: Int
     onboarding_completed: Boolean
+    host_mode: Boolean
+    phone_number: String
+    profile_visibility: String
   }
 
   type UpdatedProfileData {
@@ -41,6 +44,9 @@ const typeDefs = /* GraphQL */ `
     location_scope: String
     batch_year: Int
     onboarding_completed: Boolean
+    host_mode: Boolean
+    phone_number: String
+    profile_visibility: String
     updated_at: String
   }
 
@@ -61,6 +67,9 @@ const typeDefs = /* GraphQL */ `
     location_scope: String
     batch_year: Int
     onboarding_completed: Boolean
+    host_mode: Boolean
+    phone_number: String
+    profile_visibility: String
     updated_at: String
   }
 
@@ -99,6 +108,13 @@ const typeDefs = /* GraphQL */ `
     status: String!
     createdAt: String!
     requester: ConnectionRequester!
+  }
+
+  type OutgoingPendingConnection {
+    id: ID!
+    status: String!
+    createdAt: String!
+    targetUser: ConnectionRequester!
   }
 
   type ConnectedUser {
@@ -140,6 +156,7 @@ const typeDefs = /* GraphQL */ `
     profilePhotoUrl: String
     batchYear: Int
     proximityMiles: Float
+    hostMode: Boolean
   }
 
   extend type Query {
@@ -147,6 +164,7 @@ const typeDefs = /* GraphQL */ `
     currentUser: MeResult
     myPrivacyRequests: [CustomPrivacyRequest!]!
     myPendingConnections: [PendingConnectionRequest!]!
+    myOutgoingPendingConnections: [OutgoingPendingConnection!]!
     myConnections: [ConnectedUser!]!
     searchUsers(
       location: String
@@ -157,10 +175,11 @@ const typeDefs = /* GraphQL */ `
       universities: [String!]
       batch_year: Int
       sort: SearchSort
-      not_connected_only: Boolean
+      connected_only: Boolean
       name: String
       page: Int
       pageSize: Int
+      hosts_only: Boolean
     ): [SearchUserResult!]!
   }
 

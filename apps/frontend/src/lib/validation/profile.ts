@@ -21,7 +21,10 @@ export const profileSchema = z.object({
   location_lat: z.number().optional(),
   location_lng: z.number().optional(),
   location_scope: z.enum(['city', 'state', 'country']).optional(),
-  batch_year: z.number().int().min(1900, 'Batch year must be 1900 or later').max(2100, 'Batch year cannot exceed 2100'),
+  batch_year: z.number({ error: 'Batch year is required' }).int().min(1900, 'Batch year must be 1900 or later').max(2100, 'Batch year cannot exceed 2100'),
+  host_mode: z.boolean().optional(),
+  phone_number: z.string().optional(),
+  profile_visibility: z.enum(['everyone', 'same_university', 'same_batch']).optional(),
 })
 
 // Schema for onboarding - adds terms acceptance requirement

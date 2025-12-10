@@ -1,7 +1,7 @@
 import { graphqlClient } from '@/lib/graphql/client'
 import type { ProfileInput } from '@/lib/validation/profile'
 
-export type UpdateMyProfileInput = ProfileInput & {
+export type UpdateMyProfileInput = Partial<ProfileInput> & {
   onboarding_completed?: boolean
 }
 
@@ -23,6 +23,9 @@ const ME_QUERY = `
         location_scope
         batch_year
         onboarding_completed
+        host_mode
+        phone_number
+        profile_visibility
         updated_at
       }
     }
@@ -48,6 +51,9 @@ export async function getMe(options?: { skipCache?: boolean }) {
           location_scope?: string
           batch_year?: number
           onboarding_completed?: boolean
+          host_mode?: boolean
+          phone_number?: string
+          profile_visibility?: 'everyone' | 'same_university' | 'same_batch'
           updated_at: string
         } | null
       }
@@ -147,9 +153,51 @@ export type PendingConnection = {
 }
 
 export async function getMyPendingConnections(): Promise<PendingConnection[]> {
-  const res = await graphqlClient.query<{ myPendingConnections: PendingConnection[] }>(MY_PENDING, {}).toPromise()
+  const res = await graphqlClient.query<{ myPendingConnections: PendingConnection[] }>(MY_PENDING, {}, { requestPolicy: 'network-only' }).toPromise()
   if (res.error) throw res.error
   return res.data?.myPendingConnections ?? []
+}
+
+const MY_OUTGOING_PENDING = `
+  query MyOutgoingPendingConnections {
+    myOutgoingPendingConnections {
+      id
+      status
+      createdAt
+      targetUser {
+        userId
+        name
+        university
+        location
+        profilePhotoUrl
+        batchYear
+        linkedinUrl
+        email
+      }
+    }
+  }
+` as const
+
+export type OutgoingPendingConnection = {
+  id: string
+  status: string
+  createdAt: string
+  targetUser: {
+    userId: string
+    name: string
+    university?: string | null
+    location?: string | null
+    profilePhotoUrl?: string | null
+    batchYear?: number | null
+    linkedinUrl?: string | null
+    email?: string | null
+  }
+}
+
+export async function getMyOutgoingPendingConnections(): Promise<OutgoingPendingConnection[]> {
+  const res = await graphqlClient.query<{ myOutgoingPendingConnections: OutgoingPendingConnection[] }>(MY_OUTGOING_PENDING, {}, { requestPolicy: 'network-only' }).toPromise()
+  if (res.error) throw res.error
+  return res.data?.myOutgoingPendingConnections ?? []
 }
 
 const MY_CONNECTIONS = `
@@ -181,7 +229,7 @@ export type ConnectedUser = {
 }
 
 export async function getMyConnections(): Promise<ConnectedUser[]> {
-  const res = await graphqlClient.query<{ myConnections: ConnectedUser[] }>(MY_CONNECTIONS, {}).toPromise()
+  const res = await graphqlClient.query<{ myConnections: ConnectedUser[] }>(MY_CONNECTIONS, {}, { requestPolicy: 'network-only' }).toPromise()
   if (res.error) throw res.error
   return res.data?.myConnections ?? []
 }

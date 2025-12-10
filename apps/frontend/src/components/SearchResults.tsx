@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { createConnection } from '@/lib/graphql/operations'
 import ConnectLimitNotice from './ConnectLimitNotice'
+import LinkedInRequiredModal from './LinkedInRequiredModal'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { toast } from 'sonner'
 
 type Item = {
@@ -57,13 +59,12 @@ function ConnectionButton({
             </div>
           </>
         )}
-        <span className={`relative inline-flex items-center justify-center py-2.5 px-6 rounded-lg text-sm font-medium transition-all duration-300 ${
-          isConnecting
-            ? 'bg-yellow-100 text-yellow-800 animate-pulse'
-            : justConnected
+        <span className={`relative inline-flex items-center justify-center py-2.5 px-6 rounded-lg text-sm font-medium transition-all duration-300 ${isConnecting
+          ? 'bg-yellow-100 text-yellow-800 animate-pulse'
+          : justConnected
             ? 'bg-yellow-200 text-yellow-900 scale-110 shadow-lg'
             : 'bg-yellow-50 text-yellow-700'
-        }`}>
+          }`}>
           {isConnecting ? (
             <svg className="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -132,7 +133,16 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
   const [connectingUserId, setConnectingUserId] = useState<string | null>(null)
   const [justConnectedIds, setJustConnectedIds] = useState<Set<string>>(new Set())
 
-  const handleConnect = async (item: Item) => {
+  // LinkedIn modal state
+  const [linkedInModalOpen, setLinkedInModalOpen] = useState(false)
+  const [pendingConnectItem, setPendingConnectItem] = useState<Item | null>(null)
+
+  // Get current user to check for LinkedIn
+  const { data: currentUser } = useCurrentUser()
+  const hasLinkedIn = !!currentUser?.profile?.linkedin_url?.trim()
+
+  // Actual connection logic (called after LinkedIn verification passes)
+  const performConnect = async (item: Item) => {
     setError(null)
     setLimitReached(false)
     setConnectingUserId(item.userId)
@@ -167,8 +177,40 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
     }
   }
 
+  // Handle connect button click - check for LinkedIn first
+  const handleConnect = (item: Item) => {
+    if (!hasLinkedIn) {
+      // User doesn't have LinkedIn - show modal
+      setPendingConnectItem(item)
+      setLinkedInModalOpen(true)
+    } else {
+      // User has LinkedIn - proceed with connection
+      performConnect(item)
+    }
+  }
+
+  // Handle successful LinkedIn addition
+  const handleLinkedInSuccess = () => {
+    setLinkedInModalOpen(false)
+    if (pendingConnectItem) {
+      performConnect(pendingConnectItem)
+      setPendingConnectItem(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {/* LinkedIn Required Modal */}
+      <LinkedInRequiredModal
+        isOpen={linkedInModalOpen}
+        onClose={() => {
+          setLinkedInModalOpen(false)
+          setPendingConnectItem(null)
+        }}
+        onSuccess={handleLinkedInSuccess}
+        targetUserName={pendingConnectItem?.name || ''}
+      />
+
       {limitReached && (
         <ConnectLimitNotice onDismiss={() => setLimitReached(false)} />
       )}
@@ -178,7 +220,10 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
         {/* Mobile: Always Card View */}
         <div className="grid grid-cols-1 gap-6">
           {items.map((it) => (
-            <div key={it.userId} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6">
+            <div key={it.userId} className={`bg-white rounded-xl border-2 shadow-sm hover:shadow-md transition-all p-6 ${it.connectionStatus === 'connected'
+              ? 'border-primary/40 bg-primary/5'
+              : 'border-gray-200'
+              }`}>
               <div className="flex flex-col items-center text-center">
                 <div className="mb-4">
                   <ProfilePhoto item={it} size="lg" />
@@ -225,100 +270,106 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
 
       {/* Desktop: Respect viewMode */}
       <div className="hidden md:block">
-      {viewMode === 'card' ? (
-        // Card View
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.map((it) => (
-            <div key={it.userId} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4">
-                  <ProfilePhoto item={it} size="lg" />
-                </div>
-
-                <h3 className="font-bold text-gray-900 text-lg mb-1">{it.name}</h3>
-
-                {it.connectionStatus === 'connected' && it.email && (
-                  <a href={`mailto:${it.email}`} className="text-sm text-primary hover:underline mb-2">
-                    {it.email}
-                  </a>
-                )}
-
-                {it.university && (
-                  <p className="text-sm text-gray-600 mb-1">
-                    {it.university}
-                    {it.batchYear && ` • ${it.batchYear}`}
-                  </p>
-                )}
-
-                {it.location && (
-                  <p className="text-sm text-gray-500 flex items-center justify-center gap-1 mb-4">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {it.location}
-                    {it.proximityMiles !== null && it.proximityMiles !== undefined && (
-                      <span className="text-primary font-semibold">• {Math.round(it.proximityMiles)} mi</span>
-                    )}
-                  </p>
-                )}
-
-                <div className="mt-auto w-full">
-                  <div className="flex justify-center">
-                    <ConnectionButton item={it} onConnect={() => handleConnect(it)} isConnecting={connectingUserId === it.userId} justConnected={justConnectedIds.has(it.userId)} />
+        {viewMode === 'card' ? (
+          // Card View
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((it) => (
+              <div key={it.userId} className={`bg-white rounded-xl border-2 shadow-sm hover:shadow-md transition-all p-6 ${it.connectionStatus === 'connected'
+                ? 'border-primary/40 bg-primary/5'
+                : 'border-gray-200'
+                }`}>
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-4">
+                    <ProfilePhoto item={it} size="lg" />
                   </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        // List View - Individual cards stacked vertically
-        <div className="space-y-4">
-          {items.map((it) => (
-            <div key={it.userId} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5">
-              <div className="flex items-center gap-4">
-                <ProfilePhoto item={it} size="md" />
 
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-900 text-lg truncate">{it.name}</h3>
+                  <h3 className="font-bold text-gray-900 text-lg mb-1">{it.name}</h3>
 
                   {it.connectionStatus === 'connected' && it.email && (
-                    <a href={`mailto:${it.email}`} className="text-sm text-primary hover:underline truncate block">
+                    <a href={`mailto:${it.email}`} className="text-sm text-primary hover:underline mb-2">
                       {it.email}
                     </a>
                   )}
 
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                    {it.university && (
-                      <span className="text-sm text-gray-600">
-                        {it.university}
-                        {it.batchYear && ` • ${it.batchYear}`}
-                      </span>
-                    )}
-                    {it.location && (
-                      <span className="text-sm text-gray-500 flex items-center gap-1">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        {it.location}
-                        {it.proximityMiles !== null && it.proximityMiles !== undefined && (
-                          <span className="text-primary font-semibold">• {Math.round(it.proximityMiles)} mi</span>
-                        )}
-                      </span>
-                    )}
+                  {it.university && (
+                    <p className="text-sm text-gray-600 mb-1">
+                      {it.university}
+                      {it.batchYear && ` • ${it.batchYear}`}
+                    </p>
+                  )}
+
+                  {it.location && (
+                    <p className="text-sm text-gray-500 flex items-center justify-center gap-1 mb-4">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {it.location}
+                      {it.proximityMiles !== null && it.proximityMiles !== undefined && (
+                        <span className="text-primary font-semibold">• {Math.round(it.proximityMiles)} mi</span>
+                      )}
+                    </p>
+                  )}
+
+                  <div className="mt-auto w-full">
+                    <div className="flex justify-center">
+                      <ConnectionButton item={it} onConnect={() => handleConnect(it)} isConnecting={connectingUserId === it.userId} justConnected={justConnectedIds.has(it.userId)} />
+                    </div>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // List View - Individual cards stacked vertically
+          <div className="space-y-4">
+            {items.map((it) => (
+              <div key={it.userId} className={`bg-white rounded-xl border-2 shadow-sm hover:shadow-md transition-all p-5 ${it.connectionStatus === 'connected'
+                ? 'border-primary/40 bg-primary/5'
+                : 'border-gray-200'
+                }`}>
+                <div className="flex items-center gap-4">
+                  <ProfilePhoto item={it} size="md" />
 
-                <div className="flex-shrink-0">
-                  <ConnectionButton item={it} onConnect={() => handleConnect(it)} isConnecting={connectingUserId === it.userId} justConnected={justConnectedIds.has(it.userId)} />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-lg truncate mb-1">{it.name}</h3>
+
+                    {it.connectionStatus === 'connected' && it.email && (
+                      <a href={`mailto:${it.email}`} className="text-sm text-primary hover:underline truncate block">
+                        {it.email}
+                      </a>
+                    )}
+
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                      {it.university && (
+                        <span className="text-sm text-gray-600">
+                          {it.university}
+                          {it.batchYear && ` • ${it.batchYear}`}
+                        </span>
+                      )}
+                      {it.location && (
+                        <span className="text-sm text-gray-500 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          {it.location}
+                          {it.proximityMiles !== null && it.proximityMiles !== undefined && (
+                            <span className="text-primary font-semibold">• {Math.round(it.proximityMiles)} mi</span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-shrink-0">
+                    <ConnectionButton item={it} onConnect={() => handleConnect(it)} isConnecting={connectingUserId === it.userId} justConnected={justConnectedIds.has(it.userId)} />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
       </div>
 
       {error && (

@@ -72,7 +72,7 @@ export default function Header() {
                 </svg>
               </Link>
               <Link
-                to="/requests"
+                to="/connections"
                 className="relative text-gray-900 hover:text-gray-700 font-semibold transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
               >
                 <span className="hidden md:inline">Connections</span>

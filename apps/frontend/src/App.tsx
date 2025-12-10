@@ -26,7 +26,7 @@ export default function App() {
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/requests" element={<RequestsPage />} />
+          <Route path="/connections" element={<RequestsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/legal/terms" element={<TermsPage />} />
           <Route path="/legal/privacy" element={<PrivacyPage />} />

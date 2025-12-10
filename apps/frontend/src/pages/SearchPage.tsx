@@ -20,7 +20,8 @@ function SearchContent() {
   const [universities, setUniversities] = useState<string[]>([])
   const [batchYear, setBatchYear] = useState<number | undefined>(undefined)
   const [sort, setSort] = useState<'proximity' | 'recent' | 'name'>('recent')
-  const [notConnectedOnly, setNotConnectedOnly] = useState(true)
+  const [connectedOnly, setConnectedOnly] = useState(false)
+  const [hostsOnly, setHostsOnly] = useState(false)
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
 
   // Auto-set filters based on search mode
@@ -60,8 +61,9 @@ function SearchContent() {
     universities: universities.length > 0 ? universities : undefined,
     batch_year: batchYear,
     sort,
-    not_connected_only: notConnectedOnly || undefined,
-  }), [locationValue, university, universities, batchYear, sort, notConnectedOnly])
+    connected_only: connectedOnly || undefined,
+    hosts_only: hostsOnly || undefined,
+  }), [locationValue, university, universities, batchYear, sort, connectedOnly, hostsOnly])
 
   const { data, fetchNextPage, hasNextPage, isFetching, refetch } = useSearch(params, 20)
 
@@ -148,24 +150,44 @@ function SearchContent() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setNotConnectedOnly(!notConnectedOnly)}
-                className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
-              >
-                <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                  !notConnectedOnly
+              <div className="flex flex-wrap items-center gap-6">
+                <button
+                  type="button"
+                  onClick={() => setConnectedOnly(!connectedOnly)}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
+                >
+                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${connectedOnly
                     ? 'bg-primary border-primary'
                     : 'bg-white border-gray-300 group-hover:border-gray-400'
-                }`}>
-                  {!notConnectedOnly && (
-                    <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    }`}>
+                    <svg className={`w-3 h-3 text-black transition-opacity ${connectedOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                  )}
-                </span>
-                <span>Show existing connections</span>
-              </button>
+                  </span>
+                  <span>Only show my connections</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setHostsOnly(!hostsOnly)}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
+                >
+                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${hostsOnly
+                    ? 'bg-primary border-primary'
+                    : 'bg-white border-gray-300 group-hover:border-gray-400'
+                    }`}>
+                    <svg className={`w-3 h-3 text-black transition-opacity ${hostsOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Show only hosts
+                  </span>
+                </button>
+              </div>
 
               <div className="flex items-center justify-center gap-2 pt-2">
                 <p className="text-sm text-gray-600 font-medium">
@@ -182,25 +204,43 @@ function SearchContent() {
 
             {/* Desktop: Hide Connections (left) | Found count (center) | Sort, View Toggle (right) */}
             <div className="hidden md:flex flex-wrap items-center justify-between gap-3 min-h-[40px]">
-              {/* Left: Show Connections */}
-              <div className="flex items-center gap-6">
+              {/* Left: Filter Connections */}
+              <div className="flex items-center gap-12">
                 <button
                   type="button"
-                  onClick={() => setNotConnectedOnly(!notConnectedOnly)}
+                  onClick={() => setConnectedOnly(!connectedOnly)}
                   className="inline-flex items-center gap-3 text-sm font-medium text-gray-600 cursor-pointer select-none whitespace-nowrap hover:text-gray-900 transition-colors group"
                 >
-                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                    !notConnectedOnly
-                      ? 'bg-primary border-primary'
-                      : 'bg-white border-gray-300 group-hover:border-gray-400'
-                  }`}>
-                    {!notConnectedOnly && (
-                      <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
+                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${connectedOnly
+                    ? 'bg-primary border-primary'
+                    : 'bg-white border-gray-300 group-hover:border-gray-400'
+                    }`}>
+                    <svg className={`w-3 h-3 text-black transition-opacity ${connectedOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
                   </span>
-                  <span>Show existing connections</span>
+                  <span>Only show my connections</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setHostsOnly(!hostsOnly)}
+                  className="inline-flex items-center gap-3 text-sm font-medium text-gray-600 cursor-pointer select-none whitespace-nowrap hover:text-gray-900 transition-colors group"
+                >
+                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${hostsOnly
+                    ? 'bg-primary border-primary'
+                    : 'bg-white border-gray-300 group-hover:border-gray-400'
+                    }`}>
+                    <svg className={`w-3 h-3 text-black transition-opacity ${hostsOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Show only hosts
+                  </span>
                 </button>
               </div>
 
@@ -220,7 +260,7 @@ function SearchContent() {
               {/* Right: Sort + View Toggle */}
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-gray-600">Sort by:</span>
-                  <div className="relative">
+                <div className="relative">
                   <select
                     className="text-sm border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-1.5 px-3 pr-8 appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.05)] bg-white !bg-none"
                     value={sort}
