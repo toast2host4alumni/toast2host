@@ -37,6 +37,9 @@ playwright/.auth/
 *.swp
 *.swo
 
+# Deploy artifacts
+*.zip
+
 # OS
 .DS_Store
 Thumbs.db
