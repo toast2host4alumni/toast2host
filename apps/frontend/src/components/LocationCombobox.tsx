@@ -35,7 +35,7 @@ export default function LocationCombobox({ value, onChange, label = 'Location' }
       // Using old Autocomplete API (still supported, just deprecated for new customers)
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
         types: ['(regions)'],
-        fields: ['address_components', 'geometry', 'name', 'formatted_address'],
+        fields: ['types', 'address_components', 'geometry', 'name', 'formatted_address'],
       })
 
       autocompleteRef.current.addListener('place_changed', () => {
@@ -45,16 +45,18 @@ export default function LocationCombobox({ value, onChange, label = 'Location' }
         const lat = place.geometry.location?.lat()
         const lng = place.geometry.location?.lng()
 
+        // Determine scope based on place types (more reliable than address_components)
         let scope: 'city' | 'state' | 'country' = 'city'
-        const addressComponents = place.address_components || []
+        const placeTypes = place.types || []
 
-        const hasCity = addressComponents.some((c) => c.types.includes('locality'))
-        const hasState = addressComponents.some((c) => c.types.includes('administrative_area_level_1'))
-        const hasCountry = addressComponents.some((c) => c.types.includes('country'))
-
-        if (hasCity) scope = 'city'
-        else if (hasState) scope = 'state'
-        else if (hasCountry) scope = 'country'
+        // Check place types in priority order: city > state > country
+        if (placeTypes.includes('locality') || placeTypes.includes('postal_town') || placeTypes.includes('sublocality')) {
+          scope = 'city'
+        } else if (placeTypes.includes('administrative_area_level_1')) {
+          scope = 'state'
+        } else if (placeTypes.includes('country')) {
+          scope = 'country'
+        }
 
         onChange({
           location_text: place.formatted_address || place.name || '',
