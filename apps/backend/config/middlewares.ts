@@ -22,6 +22,7 @@ export default [
         'http://localhost:3000',
         'http://localhost:1337',
         'https://app.toast2host.net',
+        'http://toast2host-frontend-730406059835.s3-website-us-east-1.amazonaws.com',
       ],
       credentials: true,
       headers: '*',
