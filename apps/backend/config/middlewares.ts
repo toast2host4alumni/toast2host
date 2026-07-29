@@ -1,4 +1,4 @@
-export default [
+export default ({ env }: any) => [
   'global::request-id',
   'strapi::errors',
   {
@@ -36,7 +36,7 @@ export default [
     name: 'strapi::session',
     config: {
       cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: env.bool('COOKIE_SECURE', process.env.NODE_ENV === 'production'),
         sameSite: 'lax',
         httpOnly: true,
       },
