@@ -1,256 +1,199 @@
 # Email Configuration Guide for Toast2Host
 
-This guide will help you set up transactional email notifications for connection requests.
+This guide covers transactional email for connection-request / connection-approved notifications, sent from `src/utils/email-service.ts` via Strapi's built-in email plugin.
 
-## Email Provider Options
+**What's actually wired up in this codebase today is Brevo via SMTP (`@strapi/provider-email-nodemailer`)** — configured in `apps/backend/config/plugins.ts`. If you've seen older instructions in this repo mentioning Resend/SendGrid/AWS SES as the primary path, those don't match the current `plugins.ts` and would require swapping the provider package (see "Alternative Providers" below) rather than just adding an API key.
 
-We recommend **Resend** for its simplicity and generous free tier (3,000 emails/month for free).
+## Current Setup: Brevo (SMTP) via Nodemailer
 
-### Alternative Providers
-- **SendGrid**: 100 emails/day free
-- **AWS SES**: $0.10 per 1,000 emails (requires AWS account)
-- **Mailgun**: 5,000 emails/month free for 3 months
+`config/plugins.ts` already contains:
 
-## Option 1: Resend (Recommended)
+```typescript
+email: {
+  config: {
+    provider: 'nodemailer',
+    providerOptions: {
+      host: env('SMTP_HOST', 'smtp-relay.brevo.com'),
+      port: env('SMTP_PORT', 587),
+      auth: {
+        user: env('SMTP_USERNAME'),
+        pass: env('SMTP_PASSWORD'),
+      },
+      secure: false,
+      tls: { rejectUnauthorized: true },
+    },
+    settings: {
+      defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
+      defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
+    },
+  },
+},
+```
 
-### Step 1: Create Resend Account
-1. Go to https://resend.com/signup
-2. Sign up with your email
-3. Verify your email address
+`@strapi/provider-email-nodemailer` is already in `apps/backend/package.json` — no package install needed.
 
-### Step 2: Get API Key
-1. Go to https://resend.com/api-keys
-2. Click "Create API Key"
-3. Name it "Toast2Host Production"
-4. Select "Full Access"
-5. Click "Add"
-6. **Copy the API key** (you won't see it again!)
+### Step 1: Create a Brevo Account and Get SMTP Credentials
 
-### Step 3: Verify Domain (Optional but Recommended)
-1. Go to https://resend.com/domains
-2. Click "Add Domain"
-3. Enter your domain (e.g., `toast2host.net`)
-4. Add the DNS records to your domain provider
-5. Wait for verification (usually 5-10 minutes)
+1. Sign up at https://www.brevo.com (formerly Sendinblue)
+2. Go to **Settings → SMTP & API → SMTP** in the Brevo dashboard
+3. Note your **SMTP login** (usually your Brevo account email) and generate an **SMTP key** (this is a separate secret from your account password)
 
-### Step 4: Install Resend Plugin
+### Step 2: Add Environment Variables
+
+Add to `apps/backend/.env`:
+
+```bash
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USERNAME=your-brevo-smtp-login
+SMTP_PASSWORD=your-brevo-smtp-key
+EMAIL_FROM=noreply@toast2host.net
+EMAIL_REPLY_TO=support@toast2host.net
+FRONTEND_URL=https://app.toast2host.net   # or http://localhost:3000 for local dev — used to build the "View Connection Request" link
+```
+
+`EMAIL_FROM` must be an address verified with Brevo (or a domain you've verified there), or sends will be rejected/bounced.
+
+### Step 3: Restart Strapi
+
+```bash
+cd apps/backend
+pnpm dev
+```
+
+### Step 4: Test
+
+Trigger a real connection request from the frontend (Search → Connect on another profile) — `connection.ts`'s resolver calls `sendConnectionRequestEmail` on request creation and `sendConnectionApprovedEmail` on acceptance. Both are **best-effort**: failures are caught and logged, not thrown, so a broken email config will never block the underlying connection action — check the Strapi console output for `Error sending connection request email:` if nothing arrives.
+
+## Alternative Providers
+
+Since Strapi's email plugin abstracts the provider, swapping providers means: install a different `@strapi/provider-email-*` package, and replace the `provider`/`providerOptions` block in `config/plugins.ts` — the `settings` block (`defaultFrom`/`defaultReplyTo`) and everything in `email-service.ts` stays the same either way.
+
+### Resend
 
 ```bash
 cd apps/backend
 pnpm add @strapi/provider-email-resend
 ```
 
-### Step 5: Configure Strapi
-
-Add to `apps/backend/config/plugins.ts`:
-
 ```typescript
-export default ({ env }) => ({
-  // ... other plugins
-  email: {
-    config: {
-      provider: 'resend',
-      providerOptions: {
-        apiKey: env('RESEND_API_KEY'),
-      },
-      settings: {
-        defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
-        defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
-      },
+email: {
+  config: {
+    provider: 'resend',
+    providerOptions: {
+      apiKey: env('RESEND_API_KEY'),
+    },
+    settings: {
+      defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
+      defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
     },
   },
-})
+},
 ```
-
-### Step 6: Add Environment Variables
-
-Add to `apps/backend/.env`:
 
 ```bash
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
-EMAIL_FROM=noreply@toast2host.net
-EMAIL_REPLY_TO=support@toast2host.net
-FRONTEND_URL=https://app.toast2host.net
 ```
 
-### Step 7: Test Email
+Get a key at https://resend.com/api-keys (free tier: 3,000 emails/month). Optionally verify a domain at https://resend.com/domains.
 
-Restart Strapi and create a test connection request to verify emails are being sent.
-
----
-
-## Option 2: SendGrid
-
-### Step 1: Create SendGrid Account
-1. Go to https://signup.sendgrid.com/
-2. Sign up (free tier: 100 emails/day)
-3. Verify your email
-
-### Step 2: Create API Key
-1. Go to Settings → API Keys
-2. Click "Create API Key"
-3. Name it "Toast2Host"
-4. Select "Full Access"
-5. Click "Create & View"
-6. **Copy the API key**
-
-### Step 3: Install SendGrid Plugin
+### SendGrid
 
 ```bash
-cd apps/backend
 pnpm add @strapi/provider-email-sendgrid
 ```
 
-### Step 4: Configure Strapi
-
-Add to `apps/backend/config/plugins.ts`:
-
 ```typescript
-export default ({ env }) => ({
-  // ... other plugins
-  email: {
-    config: {
-      provider: 'sendgrid',
-      providerOptions: {
-        apiKey: env('SENDGRID_API_KEY'),
-      },
-      settings: {
-        defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
-        defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
-      },
+email: {
+  config: {
+    provider: 'sendgrid',
+    providerOptions: { apiKey: env('SENDGRID_API_KEY') },
+    settings: {
+      defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
+      defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
     },
   },
-})
+},
 ```
-
-### Step 5: Add Environment Variables
 
 ```bash
 SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxx
-EMAIL_FROM=noreply@toast2host.net
-EMAIL_REPLY_TO=support@toast2host.net
-FRONTEND_URL=https://app.toast2host.net
 ```
 
----
+Free tier: 100 emails/day. Create a key under Settings → API Keys in the SendGrid dashboard.
 
-## Option 3: AWS SES
-
-### Step 1: Set Up AWS SES
-1. Log in to AWS Console
-2. Go to Amazon SES
-3. Verify your sender email or domain
-4. Request production access (if needed)
-
-### Step 2: Create IAM User
-1. Go to IAM → Users → Add User
-2. Name: `toast2host-ses`
-3. Attach policy: `AmazonSESFullAccess`
-4. Save Access Key ID and Secret Access Key
-
-### Step 3: Install AWS SES Plugin
+### AWS SES
 
 ```bash
-cd apps/backend
 pnpm add @strapi/provider-email-amazon-ses
 ```
 
-### Step 4: Configure Strapi
-
-Add to `apps/backend/config/plugins.ts`:
-
 ```typescript
-export default ({ env }) => ({
-  // ... other plugins
-  email: {
-    config: {
-      provider: 'amazon-ses',
-      providerOptions: {
-        key: env('AWS_SES_KEY'),
-        secret: env('AWS_SES_SECRET'),
-        amazon: env('AWS_SES_REGION', 'us-east-1'),
-      },
-      settings: {
-        defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
-        defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
-      },
+email: {
+  config: {
+    provider: 'amazon-ses',
+    providerOptions: {
+      key: env('AWS_SES_KEY'),
+      secret: env('AWS_SES_SECRET'),
+      amazon: env('AWS_SES_REGION', 'us-east-1'),
+    },
+    settings: {
+      defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
+      defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
     },
   },
-})
+},
 ```
-
-### Step 5: Add Environment Variables
 
 ```bash
 AWS_SES_KEY=AKIAXXXXXXXXXXXXXXXX
 AWS_SES_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 AWS_SES_REGION=us-east-1
-EMAIL_FROM=noreply@toast2host.net
-EMAIL_REPLY_TO=support@toast2host.net
-FRONTEND_URL=https://app.toast2host.net
 ```
 
----
+Requires a verified sender identity/domain in the SES console, and production access requested if you're out of the SES sandbox.
 
-## Testing Emails
+## Email Templates
 
-After configuration:
+Two HTML templates in `apps/backend/src/utils/email-templates/`:
 
-1. Restart Strapi backend
-2. Create a test connection request from the frontend
-3. Check the recipient's email inbox
-4. Check Strapi logs for any errors:
-   ```bash
-   pm2 logs strapi-backend
-   ```
+- **`connection-request.html`** — sent to the host when someone requests to connect. Placeholders: `{{HOST_FIRST_NAME}}`, `{{GUEST_FULL_NAME}}`, `{{GUEST_FIRST_NAME}}`, `{{GUEST_UNIVERSITY}}`, `{{GUEST_BATCH}}`, `{{CONNECTIONS_URL}}`, `{{LOGO_URL}}`, and an optional `{{#if GUEST_LINKEDIN}}...{{/if}}` block for `{{GUEST_LINKEDIN}}`
+- **`connection-approved.html`** — sent to the guest when their request is accepted. Placeholders: `{{GUEST_FIRST_NAME}}`, `{{HOST_FULL_NAME}}`, `{{HOST_EMAIL}}`, `{{HOST_UNIVERSITY}}`, `{{HOST_BATCH}}`, `{{CONNECTIONS_URL}}`, `{{LOGO_URL}}`, and an optional `{{#if HOST_LOCATION}}...{{/if}}` block
 
-## Email Template Customization
+Both are read from `src/utils/email-templates/` at send time via `fs.readFileSync` (note: from `src/`, not `dist/`, even in a built deployment — see `email-service.ts`), so edits take effect without a rebuild in dev, but **do** require the `src/` directory to exist alongside `dist/` in whatever you deploy.
 
-The email template is located at:
-```
-apps/backend/src/utils/email-templates/connection-request.html
-```
-
-You can customize:
-- Colors (currently using #ffc510 yellow theme)
-- Logo (update {{LOGO_URL}})
-- Text content
-- Button styling
+`LOGO_URL` is built as `${strapi.config.get('server.url')}/t2h_logo.png` — the logo must be present under `apps/backend/public/`.
 
 ## Troubleshooting
 
-### Emails not sending?
-1. Check Strapi logs: `pm2 logs strapi-backend`
-2. Verify API key is correct in `.env`
-3. Check email provider dashboard for errors
-4. Ensure `EMAIL_FROM` address is verified with your provider
+### Emails not sending
 
-### Emails going to spam?
-1. Verify your domain with the email provider
-2. Add SPF and DKIM DNS records
-3. Use a custom domain for sending (not Gmail/Yahoo)
-4. Warm up your sender reputation gradually
+1. Check the Strapi backend console/logs for `Error sending connection request email:` or `Error sending connection approved email:` — these are logged, not thrown, so they're easy to miss if you're only watching the frontend
+2. Verify `SMTP_USERNAME`/`SMTP_PASSWORD` (or the equivalent for whatever provider you're using) are correct
+3. Check your provider's dashboard for bounce/rejection details
+4. Confirm `EMAIL_FROM` is a verified sender for your provider
 
-### Logo not showing?
-1. Ensure logo is accessible at: `https://api.toast2host.net/t2h_logo.png`
-2. Check if the logo file exists in `apps/backend/public/`
-3. Verify `server.url` is set correctly in Strapi config
+### Emails going to spam
+
+1. Verify your sending domain with your provider (SPF/DKIM records)
+2. Avoid sending from a raw Gmail/Yahoo-style address
+3. Warm up sender reputation gradually if sending volume ramps up quickly
+
+### Logo not showing in emails
+
+1. Confirm `apps/backend/public/t2h_logo.png` exists
+2. Confirm `server.url` (`PUBLIC_URL` env var, or the `server.ts` default) is reachable from wherever the recipient opens the email — `http://localhost:1337/...` will never load in someone else's inbox, so this only works end-to-end in a deployed environment with a public URL
 
 ## Environment Variables Summary
 
-Add these to your production server's `.env` file:
-
 ```bash
-# Email Provider (choose one)
-RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
-# OR
-SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxx
-# OR
-AWS_SES_KEY=AKIAXXXXXXXXXXXXXXXX
-AWS_SES_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-AWS_SES_REGION=us-east-1
+# Brevo/Nodemailer (current default provider)
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USERNAME=
+SMTP_PASSWORD=
 
-# Email Configuration
+# Shared across all providers
 EMAIL_FROM=noreply@toast2host.net
 EMAIL_REPLY_TO=support@toast2host.net
 FRONTEND_URL=https://app.toast2host.net
@@ -258,9 +201,8 @@ FRONTEND_URL=https://app.toast2host.net
 
 ## Next Steps
 
-1. Choose an email provider (Resend recommended)
-2. Install the provider plugin
-3. Configure `config/plugins.ts`
-4. Add environment variables
-5. Deploy and test
-6. Monitor email delivery in provider dashboard
+1. Get Brevo SMTP credentials (or swap to an alternative provider above)
+2. Add the env vars to `apps/backend/.env`
+3. Restart Strapi
+4. Trigger a real connection request from the frontend and confirm delivery
+5. If deploying, confirm `PUBLIC_URL`/`FRONTEND_URL` point at your real domains so links and the logo resolve correctly

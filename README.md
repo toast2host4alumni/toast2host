@@ -81,8 +81,8 @@ toast2host/
 
 ```bash
 # Development
-pnpm dev                 # Start both apps
-pnpm dev:frontend        # Start only frontend (port 5173)
+pnpm dev                 # Start both apps (use pnpm only — npm creates a conflicting node_modules layout in this workspace)
+pnpm dev:frontend        # Start only frontend (port 3000)
 pnpm dev:backend         # Start only backend (port 1337)
 
 # Build

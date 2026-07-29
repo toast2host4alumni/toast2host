@@ -26,7 +26,7 @@ function OnboardingContent() {
     defaultValues: {
       first_name: '',
       last_name: '',
-      university_name: '',
+      university_name: 'BITS - Pilani',
       location_text: '',
       linkedin_url: '',
     },

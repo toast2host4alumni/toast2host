@@ -1,249 +1,160 @@
 # How to Run Toast2Host Alumni Connect
 
-## Quick Start (5 minutes)
+This is a **pnpm workspace monorepo** (`apps/backend` = Strapi 5, `apps/frontend` = Vite + React + React Router). It is **not** Next.js — the frontend was migrated from Next.js to Vite; ignore any older docs/screenshots that say otherwise.
 
-### Step 1: Setup Backend (Strapi)
+## Prerequisites
+
+- Node.js ≥22, pnpm ≥9 (`"packageManager": "pnpm@9.0.0"` in the root `package.json`)
+- **Always use `pnpm`, never `npm`, in this repo.** Running `npm install` anywhere creates a flat `node_modules` that conflicts with pnpm's structure and silently installs a second copy of React, which breaks the frontend with `Invalid hook call` errors and a blank page. If you ever see a `package-lock.json` appear, that's a sign `npm` was run by mistake — delete it and re-run `pnpm install`.
+
+## Quick Start
+
+### Step 1: Install dependencies (from the repo root)
 
 ```bash
-# Navigate to backend directory
-cd backend
-
-# Copy environment template
-cp .env.example .env
-
-# Install dependencies (already done)
-# npm install
-
-# Start Strapi in development mode
-npm run develop
+pnpm install
 ```
 
-**First time setup:**
-1. Strapi will start at **http://localhost:1337/admin**
-2. Create an admin account (save these credentials!)
-3. You'll see the Strapi admin dashboard
+### Step 2: Backend environment
 
-### Step 2: Configure Google OAuth (Required)
+`apps/backend/.env` must exist before starting Strapi. There is no `.env.example` checked in — create one with at least:
 
-**Get Google OAuth Credentials:**
-1. Go to https://console.cloud.google.com/
-2. Create a new project or select existing one
-3. Enable **Google+ API**
-4. Go to **Credentials** → Create Credentials → **OAuth 2.0 Client ID**
-5. Application type: **Web application**
-6. Authorized redirect URIs:
-   - `http://localhost:1337/api/connect/google/callback`
-7. Copy **Client ID** and **Client Secret**
-
-**Configure in Strapi:**
-1. In Strapi admin, go to **Settings** → **Users & Permissions** → **Providers**
-2. Click on **Google**
-3. Enable the provider
-4. Paste your **Client ID** and **Client Secret**
-5. The callback URL should be: `http://localhost:1337/api/connect/google/callback`
-6. Click **Save**
-
-**Update backend/.env:**
 ```bash
-PROVIDER_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-PROVIDER_GOOGLE_CLIENT_SECRET=your-client-secret
+APP_KEYS=key1,key2
+JWT_SECRET=<random string>
+ADMIN_JWT_SECRET=<random string>
+API_TOKEN_SALT=<random string>
+TRANSFER_TOKEN_SALT=<random string>
+
+# Google OAuth (see Step 4 — can be added after first boot too)
+PROVIDER_GOOGLE_CLIENT_ID=
+PROVIDER_GOOGLE_CLIENT_SECRET=
 ```
 
-### Step 3: Setup Frontend (Next.js)
+Everything else (`DATABASE_CLIENT`, `HOST`, `PORT`, `CONSENT_REQUIRED`, `DAILY_CONNECT_CAP`, ...) has a working default (see `config/*.ts`) and can be left unset for local dev — SQLite at `apps/backend/.tmp/data.db` is used automatically.
 
-Open a **new terminal** (keep Strapi running):
+### Step 3: Frontend environment
+
+`apps/frontend/.env` (plain `.env`, **not** `.env.local`) must exist before starting Vite, or the app throws on load and shows a blank page:
 
 ```bash
-# Navigate to frontend directory
-cd frontend
-
-# Copy environment template
-cp .env.local.example .env.local
-
-# Install dependencies (already done)
-# npm install
-
-# Start Next.js in development mode
-npm run dev
+VITE_STRAPI_URL=http://localhost:1337
+VITE_GOOGLE_MAPS_API_KEY=
 ```
 
-**Configure .env.local:**
+`VITE_GOOGLE_MAPS_API_KEY` can stay blank — `LocationCombobox` degrades gracefully (logs a console warning, no autocomplete) rather than crashing. `VITE_STRAPI_URL` is required; its absence is a hard crash (`client.ts` throws at import time).
+
+**Vite only reads `.env` at server startup** — if you edit it while `vite` is already running, restart the dev server for the change to take effect.
+
+### Step 4: Start both servers
+
+From the repo root:
+
 ```bash
-NEXT_PUBLIC_STRAPI_URL=http://localhost:1337
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
-NEXT_PUBLIC_UNIVERSITY_SCOPE=US
+pnpm dev                # both apps via turbo
+# or individually:
+pnpm dev:backend         # Strapi only
+pnpm dev:frontend        # Vite only
 ```
 
-**Get Google Maps API Key:**
-1. Go to https://console.cloud.google.com/ (same project as OAuth)
-2. Go to **APIs & Services** → **Library**
-3. Enable these APIs:
-   - **Places API**
-   - **Geocoding API**
-   - **Maps JavaScript API**
-4. Go to **Credentials** → Create Credentials → **API Key**
-5. Copy the API key to `.env.local`
+- **Backend**: http://localhost:1337 (admin at `/admin`, GraphQL Playground at `/graphql`)
+- **Frontend**: http://localhost:3000 (fixed in `apps/frontend/vite.config.ts`, **not** 5173)
 
-### Step 4: Access the Application
+First run: visit `/admin` and create your Strapi admin account.
 
-The app will be running at:
-- **Frontend**: http://localhost:3000
-- **Backend Admin**: http://localhost:1337/admin
-- **GraphQL Playground**: http://localhost:1337/graphql
+### Step 5: Configure Google OAuth
 
-## Development Workflow
+Sign-in won't work until this is done — you'll otherwise see `{"error":{"message":"This provider is disabled"}}`.
 
-### Starting the servers
+**5a. Google Cloud Console** (https://console.cloud.google.com/)
+1. Create/select a project → enable an identity API (Google+ API, or People API/Identity if that's retired in your project)
+2. **OAuth consent screen**: External, add scopes `userinfo.email` + `userinfo.profile`; while in testing mode, add your own account under Test users
+3. **Credentials → Create Credentials → OAuth client ID**, type **Web application**
+4. Authorized redirect URI — this is the URL Google itself redirects to, which Strapi computes as `{server.url}/api/connect/{provider}/callback` regardless of what's in `config/plugins.ts`:
+   ```
+   http://localhost:1337/api/connect/google/callback
+   ```
+5. Copy the Client ID and Client Secret
 
-**Terminal 1 - Backend:**
+**5b. Add credentials to `apps/backend/.env`:**
 ```bash
-cd backend
-npm run develop
+PROVIDER_GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
+PROVIDER_GOOGLE_CLIENT_SECRET=xxxx
 ```
+Restart Strapi after editing.
 
-**Terminal 2 - Frontend:**
+**5c. Enable the provider in Strapi admin — this step is easy to miss and required every time, even with the env vars set:**
+
+Strapi's users-permissions plugin stores each OAuth provider's `enabled`/key/secret/redirect fields in the database (`plugin_users-permissions_grant` core-store key) on first bootstrap, and **that database record always overrides `config/plugins.ts`** on every subsequent boot — `.env` alone will never flip it on.
+
+1. Go to `/admin` → **Settings → Users & Permissions Plugin → Providers → Google**
+2. Toggle **Enabled** on
+3. Paste the Client ID + Client Secret
+4. There are **two different redirect-URL concepts** on this screen, easy to conflate:
+   - The URL to register with Google (informational) → `http://localhost:1337/api/connect/google/callback`
+   - **"The redirect URL to your front-end app"** (editable) → this is where Strapi sends the browser, with `?access_token=...`, after finishing the OAuth handshake. It must point at the frontend route that actually handles it:
+     ```
+     http://localhost:3000/auth/callback
+     ```
+     Set this to anything else (e.g. it defaults to a placeholder value) and the browser lands somewhere with no matching frontend route, the access token is silently discarded, and sign-in appears to just bounce back to the login page.
+5. Click **Save**
+
+If Save fails with **"Missing or Invalid credentials"**, that's usually not about the Google credentials at all — it's a generic toast Strapi shows for a `401` on the save request, meaning your **admin session expired** (default admin JWT lifetime is short). Refresh `/admin`, log back in, and redo this step.
+
+### Step 6: Seed reference data
+
+**Universities** — the `universities` content type ships empty. Either:
+- Seed the full dataset (~40k institutions, already prepared in `apps/backend/seeders/universities-seed-data.json`) directly into SQLite (fast, bypasses the API):
+  ```bash
+  cd apps/backend
+  node seeders/seed-db-direct.js
+  ```
+- Or, for a single-institution pilot, insert just the one row you need directly (see `apps/backend/seeders/seed-db-direct.js` for the insert shape) and set it as the default in `OnboardingPage.tsx`'s form `defaultValues`.
+
+(Note: the `pnpm seed:prepare` / `pnpm seed:import` scripts in `package.json` reference files that don't currently exist in `seeders/` — use `seed-db-direct.js` instead, or regenerate the missing scripts before relying on them.)
+
+## Manual Testing
+
+1. **Sign in**: http://localhost:3000/signin → Continue with Google
+2. **Onboarding**: fill in University (autocomplete via GraphQL `universitiesUS`), Location (Google Places autocomplete, requires the Maps key), LinkedIn URL, Batch Year
+3. **Search**: http://localhost:3000/search
+4. **Connect**: request a connection from a profile card
+5. **Profile / Settings**: http://localhost:3000/profile, http://localhost:3000/settings
+
+## E2E Testing (Playwright)
+
 ```bash
-cd frontend
-npm run dev
-```
-
-### Building for production
-
-**Backend:**
-```bash
-cd backend
-npm run build
-npm start
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm run build
-npm start
-```
-
-## Testing the Application
-
-### Manual Testing
-
-1. **Sign In**: Go to http://localhost:3000/signin → Click "Sign in with Google"
-2. **Onboarding**: Fill in University, LinkedIn URL, Location, Batch Year
-3. **Search**: Search for alumni by location
-4. **Connect**: Click Connect on a profile → Request should be created
-5. **Profile**: Edit your profile at http://localhost:3000/profile
-6. **Settings**: Request data export/deletion at http://localhost:3000/settings
-
-### E2E Testing with Playwright
-
-```bash
-# Install Playwright browsers (one-time)
-npm run test:install
-
-# Run E2E tests
+npm run test:install   # one-time browser download
 npm run test:e2e
-
-# Run tests with UI
 npm run test:e2e:ui
-
-# Run tests in headed mode (see browser)
 npm run test:e2e:headed
 ```
 
 ## Troubleshooting
 
-### Backend won't start
-
-**Issue**: Port 1337 already in use
-```bash
-# Find and kill the process
-lsof -ti:1337 | xargs kill -9
-```
-
-**Issue**: SQLite database locked
-```bash
-cd backend
-rm -rf .tmp
-npm run develop
-```
-
-### Frontend won't start
-
-**Issue**: Port 3000 already in use
-```bash
-# Find and kill the process
-lsof -ti:3000 | xargs kill -9
-```
-
-### Google OAuth not working
-
-**Check:**
-1. Redirect URIs are exactly: `http://localhost:1337/api/connect/google/callback`
-2. Client ID and Secret are correct in Strapi admin
-3. Google+ API is enabled in Google Cloud Console
-4. Test domain `localhost` is added to authorized domains
-
-### Location search not working
-
-**Check:**
-1. Google Maps API key is set in `frontend/.env.local`
-2. Places API, Geocoding API, Maps JavaScript API are enabled
-3. API key has no restrictions or allows `localhost`
-
-### GraphQL errors
-
-**Issue**: "Cannot query field X on type Y"
-```bash
-# Regenerate GraphQL types
-cd frontend
-npm run codegen
-```
-
-## Environment Variables Reference
-
-### Backend (.env)
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_CLIENT` | No | `sqlite` | Database type: `sqlite` or `postgres` |
-| `DATABASE_URL` | If postgres | - | PostgreSQL connection string |
-| `HOST` | No | `0.0.0.0` | Strapi host |
-| `PORT` | No | `1337` | Strapi port |
-| `APP_KEYS` | Yes | - | Strapi app keys (comma-separated) |
-| `JWT_SECRET` | Yes | - | JWT signing secret |
-| `PROVIDER_GOOGLE_CLIENT_ID` | Yes | - | Google OAuth client ID |
-| `PROVIDER_GOOGLE_CLIENT_SECRET` | Yes | - | Google OAuth client secret |
-| `CONSENT_REQUIRED` | No | `true` | Require approval for connections |
-| `DAILY_CONNECT_CAP` | No | `10` | Daily connection limit per user |
-
-### Frontend (.env.local)
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NEXT_PUBLIC_STRAPI_URL` | Yes | `http://localhost:1337` | Backend API URL |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Yes | - | Google Maps API key |
-| `NEXT_PUBLIC_UNIVERSITY_SCOPE` | No | `US` | University search scope |
+| Symptom | Likely cause |
+|---|---|
+| Blank white page on http://localhost:3000 | Missing `apps/frontend/.env` (`VITE_STRAPI_URL` throws on import if unset) |
+| `Invalid hook call` / React errors in console | Dependencies installed with `npm` instead of `pnpm` somewhere in the tree — delete `node_modules` (root + each app) and any stray `package-lock.json`, then `pnpm install` from the root |
+| `Port 1337 (or 3000) is already in use` right after stopping the dev server | The Node child process sometimes outlives the shell wrapper on Windows — find it with `netstat -ano \| findstr :1337` (or `:3000`) and kill the PID directly, then restart |
+| `This provider is disabled` on Google sign-in | Provider not enabled in Strapi admin — see Step 5c |
+| OAuth completes but you land back on the sign-in page | The "redirect URL to your front-end app" in Strapi admin doesn't match `/auth/callback` exactly — see Step 5c |
+| `Missing or Invalid credentials` saving provider settings in admin | Expired admin session, not bad OAuth credentials — refresh `/admin` and retry |
+| University / Location dropdowns empty | `universities` table not seeded (Step 6), or `VITE_GOOGLE_MAPS_API_KEY` unset |
+| GraphQL "Cannot query field X on type Y" | Regenerate types: `cd apps/frontend && pnpm codegen` |
 
 ## Tech Stack
 
-- **Backend**: Strapi v5.31.0, Node.js 18+, SQLite/PostgreSQL
-- **Frontend**: Next.js 16.0.3, React 19.2.0, TypeScript 5.9.3
-- **Styling**: Tailwind CSS 4.1.17
-- **GraphQL**: urql 5.0.1
-- **Forms**: React Hook Form 7.66.0 + Zod 4.1.12
-- **Testing**: Playwright 1.40.0
+- **Backend**: Strapi 5.41.x, Node ≥22, SQLite (dev) / PostgreSQL (prod), `@strapi/plugin-graphql`, `@strapi/plugin-users-permissions`, `@strapi/provider-email-nodemailer` (Brevo SMTP)
+- **Frontend**: Vite 7, React 19, TypeScript 5.9, React Router 7
+- **Styling**: Tailwind CSS v4
+- **GraphQL client**: urql 5
+- **Forms**: React Hook Form + Zod
+- **Testing**: Playwright
 
-## Next Steps
+## Further Reading
 
-1. **Set up Google OAuth** - Required for authentication
-2. **Get Google Maps API key** - Required for location search
-3. **Start both servers** - Backend on 1337, Frontend on 3000
-4. **Test the flow** - Sign in → Onboard → Search → Connect
-5. **Review the code** - Explore specs/ directory for requirements
-
-## Getting Help
-
-- **Specifications**: See `specs/001-alumni-connect-mvp/spec.md`
-- **Gap Analysis**: See `GAP_ANALYSIS.md`
-- **Quickstart Guide**: See `specs/001-alumni-connect-mvp/quickstart.md`
-- **Test Documentation**: See `tests/e2e/README.md`
+- [docs/BACKEND_SETUP.md](docs/BACKEND_SETUP.md)
+- [docs/FRONTEND_SETUP.md](docs/FRONTEND_SETUP.md)
+- [docs/EMAIL_SETUP.md](docs/EMAIL_SETUP.md)
+- `specs/001-alumni-connect-mvp/spec.md`

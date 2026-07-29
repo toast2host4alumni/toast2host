@@ -1,62 +1,56 @@
 # Frontend Setup Guide
 
-Complete setup instructions for the Toast2Host frontend application (Next.js/React + Vite).
+Complete setup instructions for the Toast2Host frontend (**Vite + React 19 + React Router 7** — this was migrated off Next.js; there is no Next.js in this app anymore).
 
 ## Prerequisites
 
-Before starting, ensure you have:
-
 - **Node.js**: ≥22.0.0
-- **pnpm**: ≥9.0.0
-- **Backend**: Running Strapi backend (see [BACKEND_SETUP.md](./BACKEND_SETUP.md))
-- **Google Maps API Key**: Required for location search features
+- **pnpm**: ≥9.0.0 — use pnpm, not npm (see the note in [BACKEND_SETUP.md](./BACKEND_SETUP.md#prerequisites); running `npm install` anywhere in this workspace installs a second, conflicting copy of React and breaks the app with `Invalid hook call` errors)
+- **Backend**: running Strapi backend (see [BACKEND_SETUP.md](./BACKEND_SETUP.md))
+- **Google Maps API Key**: only needed if you want live location autocomplete; the app degrades gracefully without one
 
 ## Installation
 
 ### 1. Install Dependencies
 
-From the **project root**, install all workspace dependencies:
+From the **project root**:
 
 ```bash
 pnpm install
 ```
 
-This installs dependencies for all apps in the monorepo, including the frontend.
-
 ### 2. Configure Environment Variables
 
-Create environment file:
+Create `apps/frontend/.env` (a plain `.env` file — there is no `.env.local.example`, and Vite's `.env.local` convention is not what this app uses):
 
 ```bash
-cd apps/frontend
-cp .env.local.example .env.local
-```
-
-Edit `.env.local` with your configuration:
-
-```bash
-# Backend API URL (local development)
 VITE_STRAPI_URL=http://localhost:1337
 
-# Google Maps API Key
-# Get from: https://console.cloud.google.com/
-# Enable: Places API, Geocoding API, Maps JavaScript API
-VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key-here
-
-# University Search Scope (US, UK, IN, etc.)
-VITE_UNIVERSITY_SCOPE=US
+# Optional — Places/Geocoding/Maps JavaScript autocomplete in LocationCombobox.
+# Enable all three APIs in the same Google Cloud project used for OAuth.
+# If left blank, the component just logs a console warning and the location
+# field falls back to a plain text input — it does not crash the app.
+VITE_GOOGLE_MAPS_API_KEY=
 ```
 
-### 3. Generate GraphQL Types (Optional)
+`VITE_STRAPI_URL` is **required** — `src/lib/graphql/client.ts` throws at import time if it's unset, which crashes the whole app before it mounts (blank page, no error shown on screen — check the browser console).
 
-If you modify GraphQL queries or the backend schema changes, regenerate types:
+**Vite only reads `.env` at server startup.** If you edit it while `pnpm dev` is already running, stop and restart the dev server — a hot-reload alone won't pick up the change.
+
+There is currently no `VITE_UNIVERSITY_SCOPE` variable read anywhere in the frontend source, despite older docs mentioning one.
+
+### 3. Generate GraphQL Types (Optional)
 
 ```bash
 cd apps/frontend
 pnpm codegen
 ```
 
-This generates TypeScript types from your GraphQL schema in `src/gql/`.
+This reads `codegen.ts` and writes generated types to **`src/lib/graphql/generated.ts`** (not `src/gql/`). Note: `codegen.ts` reads `process.env.VITE_STRAPI_URL` directly (there's no dotenv loading in that script), so it won't pick up `apps/frontend/.env` automatically — export the variable in your shell first if the default doesn't match your backend URL:
+
+```bash
+VITE_STRAPI_URL=http://localhost:1337 pnpm codegen
+```
 
 ## Running the Application
 
@@ -65,37 +59,29 @@ This generates TypeScript types from your GraphQL schema in `src/gql/`.
 From the **project root**:
 
 ```bash
-# Start both frontend and backend
-pnpm dev
-
-# Or start only frontend
-pnpm dev:frontend
+pnpm dev              # both frontend and backend via turbo
+pnpm dev:frontend      # frontend only
 ```
 
-From **apps/frontend** directory:
+Or from `apps/frontend` directly:
 
 ```bash
 cd apps/frontend
 pnpm dev
 ```
 
-The frontend will start at **http://localhost:5173**
+**The frontend runs at http://localhost:3000** — fixed via `server.port` in `vite.config.ts`. It is not the Vite default of 5173.
 
 ### Production Build
 
 ```bash
-# From project root
-pnpm build:frontend
-
-# Or from apps/frontend
-cd apps/frontend
-pnpm build
+pnpm build:frontend            # from project root
+# or
+cd apps/frontend && pnpm build
 ```
 
-Preview production build:
-
 ```bash
-pnpm preview
+pnpm preview   # preview the production build
 ```
 
 ## Project Structure
@@ -103,175 +89,194 @@ pnpm preview
 ```
 apps/frontend/
 ├── src/
-│   ├── components/       # Reusable UI components
-│   ├── pages/            # Route pages
-│   ├── lib/              # Utilities and GraphQL client
-│   ├── gql/              # Generated GraphQL types
-│   ├── hooks/            # Custom React hooks
-│   └── App.tsx           # Main app component
-├── public/               # Static assets
-├── .env.local           # Environment variables
-└── vite.config.ts       # Vite configuration
+│   ├── components/           # Reusable UI (AuthGuard, Header, Footer, *Combobox, ui/*)
+│   ├── pages/                 # Route components
+│   ├── lib/
+│   │   ├── auth.ts            # sessionStorage token helpers
+│   │   ├── utils.ts
+│   │   ├── validation/        # Zod schemas (react-hook-form resolvers)
+│   │   └── graphql/
+│   │       ├── client.ts       # urql client — throws if VITE_STRAPI_URL is unset
+│   │       ├── operations.ts   # query/mutation functions (getMe, updateMyProfile, ...)
+│   │       └── generated.ts    # output of `pnpm codegen`
+│   ├── hooks/                 # useCurrentUser, useSearch, ...
+│   └── App.tsx                # React Router route table
+├── public/
+├── .env                       # not committed — see step 2 above
+└── vite.config.ts             # port 3000, PWA/compression/svgr plugins
 ```
 
 ## Key Features
 
 ### Authentication
 
-Frontend uses Google OAuth via the backend. Token stored in `localStorage` as `t2h_token`.
+Google OAuth is handled by the Strapi backend; the frontend just kicks off and completes the redirect dance.
 
-**Sign-in flow:**
-1. User clicks "Sign in with Google" → `/signin`
-2. Redirects to backend OAuth endpoint
-3. Backend redirects back to `/auth/callback` with token
-4. Token stored, user redirected to `/search` or `/onboarding`
+**Token storage**: the JWT is stored in **`sessionStorage`** under the key `t2h_token` (`src/lib/auth.ts`) — **not** `localStorage`. It does not persist across browser restarts or across tabs by design.
+
+**Sign-in flow** (`SignInPage.tsx` → `AuthCallbackPage.tsx`):
+1. User clicks "Continue with Google" → browser navigates to `${VITE_STRAPI_URL}/api/connect/google` (no `callback` query param is passed)
+2. Google → Strapi's own callback (`/api/connect/google/callback`) → Strapi redirects the browser to whatever's configured as **"the redirect URL to your front-end app"** in Strapi admin (Settings → Users & Permissions → Providers → Google), which must be:
+   ```
+   http://localhost:3000/auth/callback
+   ```
+   with `?access_token=...` appended. If that admin field is misconfigured, the browser lands somewhere with no matching route, React Router's catch-all redirects to `/`, and the token is silently discarded — sign-in will appear to just bounce back to the login page.
+3. `AuthCallbackPage` reads `access_token` from the URL, calls `${VITE_STRAPI_URL}/api/auth/google/callback?access_token=...` to exchange it for a Strapi JWT, stores it via `setAuthToken`, then navigates to `/search` (or the user completes onboarding first via `AuthGuard`'s `requireOnboarding` check).
+
+**Dev-mode gotcha:** `main.tsx` wraps the app in `<StrictMode>`, which deliberately double-invokes effects on mount in development. `AuthCallbackPage`'s effect is guarded with a `useRef` flag (`hasRun`) specifically to prevent the token-exchange logic from firing twice and racing itself — if you ever see the callback intermittently bounce back to `/signin` right after a real login, check that guard is still in place before assuming it's a backend problem.
 
 ### GraphQL Client
 
-Uses **urql** for GraphQL queries. Client configured in `src/lib/graphql.tsx`:
+Uses **urql**, configured in `src/lib/graphql/client.ts`:
 
 ```typescript
-import { Client, cacheExchange, fetchExchange } from 'urql';
+import { createClient, cacheExchange, fetchExchange } from 'urql'
+import { getAuthToken } from '@/lib/auth'
 
-const client = new Client({
-  url: import.meta.env.VITE_STRAPI_URL + '/graphql',
+const STRAPI_URL = import.meta.env.VITE_STRAPI_URL
+if (!STRAPI_URL) throw new Error('VITE_STRAPI_URL is not defined')
+
+export const graphqlClient = createClient({
+  url: `${STRAPI_URL}/graphql`,
   exchanges: [cacheExchange, fetchExchange],
-  fetchOptions: () => ({
-    headers: {
-      authorization: `Bearer ${localStorage.getItem('t2h_token')}`,
-    },
-  }),
-});
+  requestPolicy: 'cache-first',
+  fetchOptions: () => {
+    const token = getAuthToken()
+    return {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  },
+})
 ```
 
-### Routes
+`fetchOptions` is a function, so the token is read fresh from `sessionStorage` on every request — no stale-closure risk there.
 
-| Route | Description |
-|-------|-------------|
-| `/` | Landing page |
-| `/signin` | Google Sign-In |
-| `/auth/callback` | OAuth callback handler |
-| `/onboarding` | New user profile setup |
-| `/search` | Alumni search interface |
-| `/requests` | Pending connection requests |
-| `/profile` | Edit user profile |
-| `/settings` | Privacy settings |
+### Routes (`src/App.tsx`)
+
+| Route | Page | Notes |
+|-------|------|-------|
+| `/` | `HomePage` | |
+| `/signin` | `SignInPage` | |
+| `/auth/callback` | `AuthCallbackPage` | must match the Strapi admin "front-end redirect URL" exactly |
+| `/onboarding` | `OnboardingPage` | `AuthGuard requireOnboarding={false}` |
+| `/search` | `SearchPage` | `AuthGuard` (default `requireOnboarding={true}`) |
+| `/profile` | `ProfilePage` | |
+| `/connections` | `RequestsPage` | (not `/requests`) |
+| `/settings` | `SettingsPage` | |
+| `/legal/terms`, `/legal/privacy` | static pages | |
+| `*` | redirects to `/` | catch-all — lands here if you navigate to an undefined route, e.g. a misconfigured OAuth redirect URL |
+
+### AuthGuard (`src/components/AuthGuard.tsx`)
+
+Wraps a page, not a route. Checks `isAuthenticated()` (sessionStorage) and, unless `requireOnboarding={false}`, also checks `useCurrentUser()`'s `profile.onboarding_completed`:
+- Not authenticated → redirect to `/signin`
+- Authenticated but not onboarded (and `requireOnboarding` true) → redirect to `/onboarding`
 
 ## Development Workflow
 
 ### Adding a New Feature
 
-1. **Create GraphQL query/mutation** in `src/lib/graphql/` or inline
-2. **Generate types**: `pnpm codegen`
-3. **Create components** in `src/components/`
-4. **Add route** in `src/App.tsx` (React Router)
-5. **Test** in browser
+1. Add the query/mutation function in `src/lib/graphql/operations.ts` (calls `graphqlClient`)
+2. `pnpm codegen` if you need generated types
+3. Build the component in `src/components/`
+4. Add the route in `src/App.tsx`
+5. Test in the browser
 
 ### Form Validation
 
-Uses **React Hook Form** + **Zod** for form validation:
+React Hook Form + Zod, e.g. `src/lib/validation/profile.ts` (`onboardingSchema`):
 
 ```typescript
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
-const schema = z.object({
-  name: z.string().min(2, 'Name required'),
-  email: z.string().email('Invalid email'),
-});
-
-const form = useForm({
-  resolver: zodResolver(schema),
-});
+const { register, handleSubmit } = useForm({
+  resolver: zodResolver(onboardingSchema),
+})
 ```
 
 ### Styling
 
-Uses **Tailwind CSS v4** with custom configuration. UI components from **shadcn/ui** (Radix UI primitives).
+Tailwind CSS v4 + shadcn/ui-style components on Radix primitives (`src/components/ui/`).
 
 ## Common Issues
 
+### Blank page on load
+
+Check the browser console first. If you see `VITE_STRAPI_URL is not defined`, create/fix `apps/frontend/.env` and restart the dev server (see step 2).
+
+### `Invalid hook call` / duplicate React
+
+Someone ran `npm install` instead of `pnpm install` somewhere in the workspace. Fix:
+```bash
+rm -rf node_modules apps/frontend/node_modules apps/backend/node_modules package-lock.json
+pnpm install
+```
+
 ### Port Already in Use
 
-If port 5173 is occupied:
-
 ```bash
-# Kill process on port 5173
-lsof -ti:5173 | xargs kill -9
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <pid> /F
 
-# Or set custom port in vite.config.ts
-export default defineConfig({
-  server: { port: 3000 }
-});
+# macOS/Linux
+lsof -ti:3000 | xargs kill -9
 ```
+Note the port is fixed to 3000 in `vite.config.ts`; if you deliberately want a different port, edit `server.port` there.
 
 ### GraphQL Connection Error
 
-**Error**: `Network request failed`
+1. Confirm the backend is running: `pnpm dev:backend`
+2. Confirm `VITE_STRAPI_URL` in `apps/frontend/.env`
+3. Hit http://localhost:1337/graphql directly to confirm the backend's GraphQL endpoint responds
 
-**Solutions**:
-1. Ensure backend is running: `pnpm dev:backend`
-2. Check `VITE_STRAPI_URL` in `.env.local`
-3. Verify backend GraphQL endpoint: http://localhost:1337/graphql
+### Google Sign-In Shows "This provider is disabled"
 
-### Google Maps Not Loading
+This is a backend-side config issue, not a frontend bug — see [BACKEND_SETUP.md](./BACKEND_SETUP.md#3-configure-google-oauth). In short: the provider must be explicitly enabled in Strapi admin (Settings → Users & Permissions → Providers → Google), not just configured via `.env`.
 
-**Error**: `Google Maps API error`
+### Sign-in completes but bounces back to `/signin`
 
-**Solutions**:
-1. Verify `VITE_GOOGLE_MAPS_API_KEY` is set
-2. Enable required APIs in Google Cloud Console:
-   - Places API
-   - Geocoding API
-   - Maps JavaScript API
-3. Check API key restrictions (HTTP referrers)
+Almost always the Strapi admin's "redirect URL to your front-end app" not matching `http://localhost:3000/auth/callback` exactly. See the Authentication section above.
 
-### Authentication Fails
+### University / Location dropdowns empty
 
-**Error**: `Unauthorized` or token issues
-
-**Solutions**:
-1. Clear localStorage: `localStorage.clear()`
-2. Verify backend Google OAuth is configured
-3. Check backend `.env` has correct `PROVIDER_GOOGLE_CLIENT_ID/SECRET`
-4. Ensure `CLIENT_URL` in backend matches your frontend URL
+- University: the backend `universities` table is likely unseeded — see [BACKEND_SETUP.md](./BACKEND_SETUP.md#5-seed-reference-data)
+- Location: `VITE_GOOGLE_MAPS_API_KEY` unset or the Places/Geocoding/Maps JavaScript APIs aren't enabled on that key's Google Cloud project
 
 ### Type Errors After Schema Changes
 
-**Error**: TypeScript errors in GraphQL queries
-
-**Solution**:
 ```bash
 cd apps/frontend
-pnpm codegen  # Regenerate types from schema
+pnpm codegen
 ```
 
 ## Environment Variables Reference
 
 | Variable | Required | Description | Example |
-|----------|----------|-------------|---------|
-| `VITE_STRAPI_URL` | Yes | Backend API URL | `http://localhost:1337` |
-| `VITE_GOOGLE_MAPS_API_KEY` | Yes | Google Maps API key | `AIza...` |
-| `VITE_UNIVERSITY_SCOPE` | No | University search filter | `US` (default) |
+|----------|----------|--------------|---------|
+| `VITE_STRAPI_URL` | Yes | Backend API URL — throws at import time if unset | `http://localhost:1337` |
+| `VITE_GOOGLE_MAPS_API_KEY` | No | Places/Geocoding/Maps JS key; degrades gracefully if blank | `AIza...` |
 
 ## Scripts Reference
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start development server (port 5173) |
-| `pnpm build` | Production build → `dist/` |
+| `pnpm dev` | Start dev server (port 3000) |
+| `pnpm build` | Production build → `dist/` (runs `tsc -b` first) |
 | `pnpm preview` | Preview production build |
-| `pnpm lint` | Run ESLint |
-| `pnpm codegen` | Generate GraphQL types |
+| `pnpm lint` | ESLint |
+| `pnpm codegen` | Generate GraphQL types → `src/lib/graphql/generated.ts` |
 
 ## Next Steps
 
-1. **Configure Google OAuth**: See backend setup for OAuth configuration
-2. **Set up Google Maps API**: Enable required APIs in Google Cloud Console
-3. **Review Routes**: Check `src/App.tsx` for route structure
-4. **Test Authentication**: Try sign-in flow end-to-end
-5. **Explore Components**: Check `src/components/` for reusable UI
+1. Confirm Google OAuth is fully wired on the backend side (both the `.env` credentials **and** the Strapi admin "enable provider" + "front-end redirect URL" steps)
+2. Set up a Google Maps API key if location autocomplete matters for your pilot
+3. Review `src/App.tsx` for the current route table
+4. Walk the sign-in flow end-to-end once, watching the Network tab, before assuming anything else is broken
 
 ## Additional Resources
 

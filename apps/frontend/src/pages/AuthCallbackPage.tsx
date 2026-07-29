@@ -1,12 +1,16 @@
-import { useEffect, Suspense } from 'react'
+import { useEffect, useRef, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { setAuthToken } from '@/lib/auth'
 
 function AuthCallbackContent() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const hasRun = useRef(false)
 
   useEffect(() => {
+    if (hasRun.current) return
+    hasRun.current = true
+
     async function handleCallback() {
       try {
         // Get Google's access_token from Strapi redirect
