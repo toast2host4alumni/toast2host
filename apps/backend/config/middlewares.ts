@@ -35,12 +35,9 @@ export default ({ env }: any) => [
   {
     name: 'strapi::session',
     config: {
-      cookie: {
-        secure: env.bool('COOKIE_SECURE', process.env.NODE_ENV === 'production'),
-        sameSite: 'lax',
-        httpOnly: true,
-      },
-      proxy: true, // Trust proxy headers for secure cookies
+      secure: env.bool('COOKIE_SECURE', process.env.NODE_ENV === 'production'),
+      sameSite: 'lax',
+      httpOnly: true,
     },
   },
   'strapi::favicon',
