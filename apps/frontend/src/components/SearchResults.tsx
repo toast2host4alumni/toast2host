@@ -2,8 +2,11 @@ import React, { useState } from 'react'
 import { createConnection } from '@/lib/graphql/operations'
 import ConnectLimitNotice from './ConnectLimitNotice'
 import LinkedInRequiredModal from './LinkedInRequiredModal'
+import TripDetailsRequiredModal from './TripDetailsRequiredModal'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { toast } from 'sonner'
+
+type TripDetails = { travelDateFrom: string; travelDateTo: string; guests: number }
 
 type Item = {
   userId: string
@@ -21,6 +24,9 @@ export interface SearchResultsProps {
   items: Item[]
   onAfterConnect?: () => void
   viewMode?: 'card' | 'list'
+  travelDateFrom?: string
+  travelDateTo?: string
+  guests?: number
 }
 
 function ConnectionButton({
@@ -34,17 +40,6 @@ function ConnectionButton({
   isConnecting?: boolean;
   justConnected?: boolean;
 }) {
-  if (item.connectionStatus === 'connected') {
-    return (
-      <span className="inline-flex items-center justify-center py-2 px-4 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
-        <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-        </svg>
-        Connected
-      </span>
-    )
-  }
-
   if (item.connectionStatus === 'pending' || isConnecting || justConnected) {
     return (
       <div className="relative">
@@ -81,6 +76,28 @@ function ConnectionButton({
     )
   }
 
+  if (item.connectionStatus === 'connected') {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <span className="inline-flex items-center justify-center py-1 px-3 rounded-lg bg-green-50 text-green-700 text-xs font-medium">
+          <svg className="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+          Connected
+        </span>
+        <button
+          className="btn-primary py-2 px-5 rounded-lg text-sm font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center hover:scale-105 active:scale-95"
+          onClick={onConnect}
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Book Again
+        </button>
+      </div>
+    )
+  }
+
   return (
     <button
       className="btn-primary py-2.5 px-6 rounded-lg text-sm font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center hover:scale-105 active:scale-95"
@@ -89,7 +106,7 @@ function ConnectionButton({
       <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
-      Connect
+      Book
     </button>
   )
 }
@@ -127,27 +144,35 @@ function ProfilePhoto({ item, size = 'md' }: { item: Item; size?: 'sm' | 'md' | 
   )
 }
 
-export default function SearchResults({ items, onAfterConnect, viewMode = 'card' }: SearchResultsProps) {
+export default function SearchResults({ items, onAfterConnect, viewMode = 'card', travelDateFrom, travelDateTo, guests }: SearchResultsProps) {
   const [error, setError] = useState<string | null>(null)
   const [limitReached, setLimitReached] = useState(false)
   const [connectingUserId, setConnectingUserId] = useState<string | null>(null)
   const [justConnectedIds, setJustConnectedIds] = useState<Set<string>>(new Set())
 
+  // Trip details modal state (When/Who, required before a booking request can be sent)
+  const [tripModalOpen, setTripModalOpen] = useState(false)
+  const [pendingTripItem, setPendingTripItem] = useState<Item | null>(null)
+
   // LinkedIn modal state
   const [linkedInModalOpen, setLinkedInModalOpen] = useState(false)
-  const [pendingConnectItem, setPendingConnectItem] = useState<Item | null>(null)
+  const [pendingConnectItem, setPendingConnectItem] = useState<{ item: Item; trip: TripDetails } | null>(null)
 
   // Get current user to check for LinkedIn
   const { data: currentUser } = useCurrentUser()
   const hasLinkedIn = !!currentUser?.profile?.linkedin_url?.trim()
 
-  // Actual connection logic (called after LinkedIn verification passes)
-  const performConnect = async (item: Item) => {
+  // Actual connection logic (called after trip details + LinkedIn verification pass)
+  const performConnect = async (item: Item, trip: TripDetails) => {
     setError(null)
     setLimitReached(false)
     setConnectingUserId(item.userId)
     try {
-      await createConnection(item.userId)
+      await createConnection(item.userId, {
+        travel_date_from: trip.travelDateFrom,
+        travel_date_to: trip.travelDateTo,
+        guests: trip.guests,
+      })
       // Mark as just connected for animation
       setJustConnectedIds(prev => new Set(prev).add(item.userId))
       toast.success(`Connection request sent to ${item.name}`)
@@ -168,6 +193,12 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
       if (String(msg).includes('DAILY_CAP_REACHED')) {
         setLimitReached(true)
         toast.error('Daily connection limit reached')
+      } else if (String(msg).includes('OVERLAPPING_DATES')) {
+        toast.error("You already have a booking for overlapping dates - you can't be in two places at once")
+      } else if (String(msg).includes('HOST_UNAVAILABLE')) {
+        toast.error('This host is already booked for those dates')
+      } else if (String(msg).includes('EXCEEDS_HOST_CAPACITY')) {
+        toast.error("This host can't fit that many guests")
       } else {
         setError('Unable to connect')
         toast.error('Unable to send connection request')
@@ -177,15 +208,33 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
     }
   }
 
-  // Handle connect button click - check for LinkedIn first
-  const handleConnect = (item: Item) => {
+  // After trip details are known, check for LinkedIn before actually sending the request
+  const proceedAfterTripDetails = (item: Item, trip: TripDetails) => {
     if (!hasLinkedIn) {
-      // User doesn't have LinkedIn - show modal
-      setPendingConnectItem(item)
+      setPendingConnectItem({ item, trip })
       setLinkedInModalOpen(true)
     } else {
-      // User has LinkedIn - proceed with connection
-      performConnect(item)
+      performConnect(item, trip)
+    }
+  }
+
+  // Handle Book button click - trip details (When/Who) are required first
+  const handleConnect = (item: Item) => {
+    if (travelDateFrom && travelDateTo && guests) {
+      // Already selected in the search bar - use those
+      proceedAfterTripDetails(item, { travelDateFrom, travelDateTo, guests })
+    } else {
+      setPendingTripItem(item)
+      setTripModalOpen(true)
+    }
+  }
+
+  // Handle trip details submitted from the modal
+  const handleTripDetailsSubmit = (trip: TripDetails) => {
+    setTripModalOpen(false)
+    if (pendingTripItem) {
+      proceedAfterTripDetails(pendingTripItem, trip)
+      setPendingTripItem(null)
     }
   }
 
@@ -193,13 +242,24 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
   const handleLinkedInSuccess = () => {
     setLinkedInModalOpen(false)
     if (pendingConnectItem) {
-      performConnect(pendingConnectItem)
+      performConnect(pendingConnectItem.item, pendingConnectItem.trip)
       setPendingConnectItem(null)
     }
   }
 
   return (
     <div className="space-y-4">
+      {/* Trip Details Required Modal */}
+      <TripDetailsRequiredModal
+        isOpen={tripModalOpen}
+        onClose={() => {
+          setTripModalOpen(false)
+          setPendingTripItem(null)
+        }}
+        onSubmit={handleTripDetailsSubmit}
+        targetUserName={pendingTripItem?.name || ''}
+      />
+
       {/* LinkedIn Required Modal */}
       <LinkedInRequiredModal
         isOpen={linkedInModalOpen}
@@ -208,7 +268,7 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
           setPendingConnectItem(null)
         }}
         onSuccess={handleLinkedInSuccess}
-        targetUserName={pendingConnectItem?.name || ''}
+        targetUserName={pendingConnectItem?.item.name || ''}
       />
 
       {limitReached && (

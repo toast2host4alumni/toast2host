@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
 import SearchResults from '@/components/SearchResults'
 import { useSearch } from '@/hooks/useSearch'
 import AuthGuard from '@/components/AuthGuard'
 import LocationCombobox, { type LocationValue } from '@/components/LocationCombobox'
 import UniversityCombobox from '@/components/UniversityCombobox'
 import UniversityMultiSelect from '@/components/UniversityMultiSelect'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 function SearchContent() {
@@ -19,6 +21,9 @@ function SearchContent() {
   const [university, setUniversity] = useState<string>('')
   const [universities, setUniversities] = useState<string[]>([])
   const [batchYear, setBatchYear] = useState<number | undefined>(undefined)
+  const [travelDateFrom, setTravelDateFrom] = useState<string>('')
+  const [travelDateTo, setTravelDateTo] = useState<string>('')
+  const [guests, setGuests] = useState<number | undefined>(undefined)
   const [sort, setSort] = useState<'proximity' | 'recent' | 'name'>('recent')
   const [connectedOnly, setConnectedOnly] = useState(false)
   const [hostsOnly, setHostsOnly] = useState(false)
@@ -63,11 +68,16 @@ function SearchContent() {
     sort,
     connected_only: connectedOnly || undefined,
     hosts_only: hostsOnly || undefined,
-  }), [locationValue, university, universities, batchYear, sort, connectedOnly, hostsOnly])
+    travel_date_from: travelDateFrom || undefined,
+    travel_date_to: travelDateTo || undefined,
+    guests,
+  }), [locationValue, university, universities, batchYear, sort, connectedOnly, hostsOnly, travelDateFrom, travelDateTo, guests])
 
   const { data, fetchNextPage, hasNextPage, isFetching, refetch } = useSearch(params, 20)
 
   const items = (data?.pages ?? []).flatMap((p) => p.items)
+
+  const activeFilterCount = (searchMode !== 'all' ? 1 : 0) + (batchYear ? 1 : 0) + (universities.length > 0 ? 1 : 0)
 
   return (
     <main className="p-3 max-w-7xl mx-auto space-y-4">
@@ -82,15 +92,118 @@ function SearchContent() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 min-h-[500px]">
           {/* Search Filters - Always visible */}
           <div className="mb-4 pb-3 border-b border-gray-200 space-y-3">
-            {/* Row 1: Location (50%) | Search Mode + Batch Year (50%) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Left 50%: Location */}
-              <div>
-                <LocationCombobox value={locationValue} onChange={onLocationChange} label="Where do you want to go?" />
-              </div>
+            {/* Row 1: Where / When / Who - single Airbnb-style pill row, + Filters button */}
+            <div className="flex flex-col md:flex-row gap-3 items-stretch">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] rounded-lg border-2 border-gray-200 divide-y md:divide-y-0 md:divide-x divide-gray-200 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.05)] bg-white">
+              <LocationCombobox value={locationValue} onChange={onLocationChange} label="Where do you want to go?" variant="bare" />
 
-              {/* Right 50%: Search Mode + Batch Year */}
-              <div className="grid grid-cols-2 gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex flex-col items-start px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50 data-[state=open]:bg-primary/5 data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-primary"
+                  >
+                    <span className="text-xs font-semibold text-gray-700">When</span>
+                    <span className={`text-sm truncate ${travelDateFrom && travelDateTo ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {travelDateFrom && travelDateTo ? `${travelDateFrom} → ${travelDateTo}` : 'Add dates'}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72" align="start">
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-gray-700">Check-in</label>
+                      <input
+                        type="date"
+                        className="w-full"
+                        value={travelDateFrom}
+                        onChange={(e) => setTravelDateFrom(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-gray-700">Check-out</label>
+                      <input
+                        type="date"
+                        className="w-full"
+                        value={travelDateTo}
+                        min={travelDateFrom || undefined}
+                        onChange={(e) => setTravelDateTo(e.target.value)}
+                      />
+                    </div>
+                    {(travelDateFrom || travelDateTo) && (
+                      <button
+                        type="button"
+                        onClick={() => { setTravelDateFrom(''); setTravelDateTo('') }}
+                        className="text-xs font-semibold text-gray-500 hover:text-gray-700 underline"
+                      >
+                        Clear dates
+                      </button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex flex-col items-start px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50 data-[state=open]:bg-primary/5 data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-primary"
+                  >
+                    <span className="text-xs font-semibold text-gray-700">Who</span>
+                    <span className={`text-sm truncate ${guests ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {guests ? `${guests} guest${guests > 1 ? 's' : ''}` : 'Add guests'}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64" align="end">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Guests</p>
+                      <p className="text-xs text-gray-500">How many are traveling?</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setGuests((g) => {
+                          const next = (g ?? 0) - 1
+                          return next <= 0 ? undefined : next
+                        })}
+                        disabled={!guests}
+                        className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed hover:border-gray-400 transition-colors"
+                      >
+                        −
+                      </button>
+                      <span className="w-6 text-center font-semibold text-gray-900">{guests ?? 0}</span>
+                      <button
+                        type="button"
+                        onClick={() => setGuests((g) => (g ?? 0) + 1)}
+                        className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400 transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Filters button - Search Mode, Batch Year, University live in this panel */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-sm font-semibold text-gray-700 transition-colors"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-primary text-black text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 shadow-sm">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 space-y-4" align="end">
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-700">Search Mode</label>
                   <div className="relative">
@@ -120,15 +233,21 @@ function SearchContent() {
                     max={2100}
                   />
                 </div>
-              </div>
+                {searchMode === 'all' && (
+                  <UniversityMultiSelect value={universities} onChange={setUniversities} label="Choose Alumni host from" />
+                )}
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchMode('all'); setBatchYear(undefined); setUniversities([]) }}
+                    className="text-xs font-semibold text-gray-500 hover:text-gray-700 underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </PopoverContent>
+            </Popover>
             </div>
-
-            {/* Row 2: University (only show when search mode is "all") */}
-            {searchMode === 'all' && (
-              <div>
-                <UniversityMultiSelect value={universities} onChange={setUniversities} label="Choose Alumni host from" />
-              </div>
-            )}
 
             {/* Mobile: Additional filters */}
             <div className="block md:hidden space-y-3">
@@ -164,7 +283,7 @@ function SearchContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </span>
-                  <span>Only show my connections</span>
+                  <span>Show only my previous hosts</span>
                 </button>
 
                 <button
@@ -219,7 +338,7 @@ function SearchContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </span>
-                  <span>Only show my connections</span>
+                  <span>Show only my previous hosts</span>
                 </button>
 
                 <button
@@ -317,7 +436,14 @@ function SearchContent() {
             </div>
           ) : (
             <>
-              <SearchResults items={items} onAfterConnect={() => refetch()} viewMode={viewMode} />
+              <SearchResults
+                items={items}
+                onAfterConnect={() => refetch()}
+                viewMode={viewMode}
+                travelDateFrom={travelDateFrom || undefined}
+                travelDateTo={travelDateTo || undefined}
+                guests={guests}
+              />
               {hasNextPage && (
                 <div className="mt-6 flex justify-center">
                   <button

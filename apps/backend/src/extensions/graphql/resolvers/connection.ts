@@ -1,6 +1,23 @@
 import { sendConnectionRequestEmail, sendConnectionApprovedEmail } from '../../../utils/email-service'
 
-type GQLCtx = { state: { user?: { id: number } } }
+type GQLCtx = { state: { user?: { id: number } }; koaContext?: { request?: { header?: { origin?: string } } } }
+
+// Same origins CORS already trusts (config/middlewares.ts) - reused here so the
+// email link points at whichever frontend actually issued the request (dev vs prod)
+// instead of a fixed FRONTEND_URL fallback, without letting a forged Origin header
+// (this is just an HTTP header - a non-browser client can set it to anything) plant
+// a phishing link in the email.
+const ALLOWED_FRONTEND_ORIGINS = [
+  'http://localhost:3000',
+  'https://app.toast2host.net',
+  'http://toast2host-frontend-730406059835.s3-website-us-east-1.amazonaws.com',
+]
+
+function resolveFrontendUrl(ctx: GQLCtx): string {
+  const origin = ctx.koaContext?.request?.header?.origin
+  if (origin && ALLOWED_FRONTEND_ORIGINS.includes(origin)) return origin
+  return process.env.FRONTEND_URL || 'https://app.toast2host.net'
+}
 
 async function countConnectionsToday(actorId: number): Promise<number> {
   const start = new Date()
@@ -16,6 +33,69 @@ async function countConnectionsToday(actorId: number): Promise<number> {
     pageSize: 1000,
   })
   return Array.isArray(items) ? items.length : 0
+}
+
+// Shared shaping logic for myHostedBookings/myTrips - both are "connected" bookings,
+// differing only in which side of the connection (actor vs target) is "the other user".
+async function buildConfirmedBookings(
+  conns: any[],
+  getOtherId: (c: any) => number | undefined,
+  getOtherUserData: (c: any) => any,
+) {
+  const otherIds = conns.map(getOtherId).filter(Boolean) as number[]
+
+  const userMap = new Map<number, any>()
+  for (const c of conns) {
+    const otherUserData = getOtherUserData(c)
+    if (otherUserData?.id) userMap.set(otherUserData.id, otherUserData)
+  }
+
+  let profileMap = new Map<number, any>()
+  if (otherIds.length > 0) {
+    const profiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
+      filters: { user: { id: { $in: otherIds } } },
+      populate: { user: { fields: ['id'] } },
+      page: 1,
+      pageSize: 100,
+    })
+    for (const p of profiles) {
+      const uid = p.user?.id
+      if (uid) profileMap.set(uid, p)
+    }
+  }
+
+  return conns.map((c: any) => {
+    const otherId = getOtherId(c)
+    const profile = otherId ? profileMap.get(otherId) : null
+    const userData = otherId ? userMap.get(otherId) : null
+    const fullName = profile ? [profile.first_name, profile.last_name].filter(Boolean).join(' ') : 'Unknown'
+
+    let profilePhotoUrl = profile?.profile_photo_url || null
+    if (profilePhotoUrl && profilePhotoUrl.startsWith('/uploads/')) {
+      const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
+      profilePhotoUrl = `${serverUrl}${profilePhotoUrl}`
+    }
+
+    return {
+      id: String(c.id),
+      status: c.status,
+      createdAt: c.createdAt,
+      confirmedAt: c.updatedAt || c.createdAt || null,
+      otherUser: {
+        userId: String(otherId || ''),
+        name: fullName || 'Unknown',
+        university: profile?.university_name || null,
+        location: profile?.location_text || null,
+        profilePhotoUrl,
+        batchYear: profile?.batch_year || null,
+        linkedinUrl: profile?.linkedin_url || null,
+        email: userData?.email || null,
+      },
+      travelDateFrom: c.travel_date_from || null,
+      travelDateTo: c.travel_date_to || null,
+      guestCount: c.guest_count || null,
+    }
+  })
 }
 
 const connectionResolvers = {
@@ -86,6 +166,9 @@ const connectionResolvers = {
             linkedinUrl: profile?.linkedin_url || null,
             email: userData?.email || null,
           },
+          travelDateFrom: c.travel_date_from || null,
+          travelDateTo: c.travel_date_to || null,
+          guestCount: c.guest_count || null,
         }
       })
     },
@@ -157,107 +240,51 @@ const connectionResolvers = {
             linkedinUrl: profile?.linkedin_url || null,
             email: null, // Don't show email until connected
           },
+          travelDateFrom: c.travel_date_from || null,
+          travelDateTo: c.travel_date_to || null,
+          guestCount: c.guest_count || null,
         }
       })
     },
-    myConnections: async (_parent: unknown, _args: unknown, ctx: GQLCtx) => {
+    // Confirmed bookings where I'm the HOST (target) - i.e. guests I've approved
+    myHostedBookings: async (_parent: unknown, _args: unknown, ctx: GQLCtx) => {
       const user = ctx.state.user
       if (!user) throw new Error('Unauthorized')
-
-      // Get all connections where I am actor or target
       const conns = await strapi.entityService.findMany('api::connection.connection', {
-        filters: {
-          status: 'connected',
-          $or: [
-            { actor_user: user.id },
-            { target_user: user.id },
-          ],
-        },
-        populate: {
-          actor_user: { fields: ['id', 'email'] },
-          target_user: { fields: ['id', 'email'] },
-        },
+        filters: { target_user: user.id, status: 'connected' },
+        populate: { actor_user: { fields: ['id', 'email'] } },
         page: 1,
-        pageSize: 200,
+        pageSize: 100,
       })
-
-      // Get the other user's ID for each connection
-      const otherUserIds: number[] = []
-      const connMap = new Map<number, any>()
-
-      for (const c of conns) {
-        const actorId = typeof c.actor_user === 'object' ? c.actor_user?.id : c.actor_user
-        const targetId = typeof c.target_user === 'object' ? c.target_user?.id : c.target_user
-        const otherId = actorId === user.id ? targetId : actorId
-        if (otherId && !otherUserIds.includes(otherId)) {
-          otherUserIds.push(otherId)
-          connMap.set(otherId, c)
-        }
-      }
-
-      // Fetch profiles
-      let profileMap = new Map<number, any>()
-      let userMap = new Map<number, any>()
-
-      for (const c of conns) {
-        if (typeof c.actor_user === 'object' && c.actor_user?.id) {
-          userMap.set(c.actor_user.id, c.actor_user)
-        }
-        if (typeof c.target_user === 'object' && c.target_user?.id) {
-          userMap.set(c.target_user.id, c.target_user)
-        }
-      }
-
-      if (otherUserIds.length > 0) {
-        const profiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
-          filters: { user: { id: { $in: otherUserIds } } },
-          populate: { user: { fields: ['id'] } },
-          page: 1,
-          pageSize: 200,
-        })
-        for (const p of profiles) {
-          const uid = p.user?.id
-          if (uid) profileMap.set(uid, p)
-        }
-      }
-
-      return otherUserIds.map((otherId) => {
-        const profile = profileMap.get(otherId)
-        const userData = userMap.get(otherId)
-        const conn = connMap.get(otherId)
-        const fullName = profile ? [profile.first_name, profile.last_name].filter(Boolean).join(' ') : 'Unknown'
-
-        // Prepend backend URL to local image paths
-        let profilePhotoUrl = profile?.profile_photo_url || null
-        if (profilePhotoUrl && profilePhotoUrl.startsWith('/uploads/')) {
-          const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
-          profilePhotoUrl = `${serverUrl}${profilePhotoUrl}`
-        }
-
-        return {
-          userId: String(otherId),
-          name: fullName || 'Unknown',
-          university: profile?.university_name || null,
-          location: profile?.location_text || null,
-          profilePhotoUrl,
-          batchYear: profile?.batch_year || null,
-          linkedinUrl: profile?.linkedin_url || null,
-          email: userData?.email || '',
-          connectedAt: conn?.updatedAt || conn?.createdAt || '',
-        }
+      return buildConfirmedBookings(conns, (c: any) => (typeof c.actor_user === 'object' ? c.actor_user?.id : c.actor_user), (c: any) => (typeof c.actor_user === 'object' ? c.actor_user : null))
+    },
+    // Confirmed bookings where I'm the GUEST (actor) - i.e. trips I've booked
+    myTrips: async (_parent: unknown, _args: unknown, ctx: GQLCtx) => {
+      const user = ctx.state.user
+      if (!user) throw new Error('Unauthorized')
+      const conns = await strapi.entityService.findMany('api::connection.connection', {
+        filters: { actor_user: user.id, status: 'connected' },
+        populate: { target_user: { fields: ['id', 'email'] } },
+        page: 1,
+        pageSize: 100,
       })
+      return buildConfirmedBookings(conns, (c: any) => (typeof c.target_user === 'object' ? c.target_user?.id : c.target_user), (c: any) => (typeof c.target_user === 'object' ? c.target_user : null))
     },
   },
   Mutation: {
-    requestConnection: async (_parent: unknown, args: { targetUserId: string }, ctx: GQLCtx) => {
+    requestConnection: async (_parent: unknown, args: { targetUserId: string; travel_date_from?: string; travel_date_to?: string; guests?: number }, ctx: GQLCtx) => {
       const user = ctx.state.user
       if (!user) throw new Error('Unauthorized')
       const targetId = Number(args.targetUserId)
       if (!targetId || targetId === user.id) throw new Error('Invalid target')
 
-      // Prevent duplicate connections for same pair (check both directions)
-      const existing = await strapi.entityService.findMany('api::connection.connection', {
+      // Only block on an already-pending request for this pair (either direction) -
+      // avoids spamming duplicate simultaneous requests. A prior connected or rejected
+      // booking does NOT block a new one: each stay is booked and approved independently,
+      // so the same host/guest pair can have multiple bookings across different trips.
+      const existingPending = await strapi.entityService.findMany('api::connection.connection', {
         filters: {
+          status: 'pending',
           $or: [
             { actor_user: user.id, target_user: targetId },
             { actor_user: targetId, target_user: user.id },
@@ -266,9 +293,58 @@ const connectionResolvers = {
         page: 1,
         pageSize: 1,
       })
-      if (Array.isArray(existing) && existing[0]) {
-        // Return existing connection regardless of direction
-        return { id: String(existing[0].id), status: existing[0].status }
+      const existingPendingConn = Array.isArray(existingPending) ? existingPending[0] : null
+      if (existingPendingConn) {
+        return { id: String(existingPendingConn.id), status: existingPendingConn.status }
+      }
+
+      // A guest can only be in one place at a time - block a new request if they already
+      // have a pending or confirmed booking (with this host or any other) whose dates overlap.
+      // Rows with no dates set can't overlap anything and are naturally excluded by the
+      // range comparison (comparing against null never matches).
+      if (args.travel_date_from && args.travel_date_to) {
+        const overlapping = await strapi.entityService.findMany('api::connection.connection', {
+          filters: {
+            actor_user: user.id,
+            status: { $in: ['pending', 'connected'] },
+            travel_date_from: { $lte: args.travel_date_to },
+            travel_date_to: { $gte: args.travel_date_from },
+          },
+          page: 1,
+          pageSize: 1,
+        })
+        if (Array.isArray(overlapping) && overlapping[0]) {
+          throw new Error('OVERLAPPING_DATES')
+        }
+
+        // A host can't be double-booked either. Only checked against CONFIRMED bookings -
+        // multiple guests are still free to submit competing pending requests for the same
+        // window (the host picks one); it's only blocked once one is actually confirmed.
+        const hostOverlap = await strapi.entityService.findMany('api::connection.connection', {
+          filters: {
+            target_user: targetId,
+            status: 'connected',
+            travel_date_from: { $lte: args.travel_date_to },
+            travel_date_to: { $gte: args.travel_date_from },
+          },
+          page: 1,
+          pageSize: 1,
+        })
+        if (Array.isArray(hostOverlap) && hostOverlap[0]) {
+          throw new Error('HOST_UNAVAILABLE')
+        }
+      }
+
+      // Enforce the host's stated guest capacity, if they've set one
+      if (args.guests) {
+        const hostProfiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
+          filters: { user: targetId },
+          limit: 1,
+        })
+        const hostProfile = Array.isArray(hostProfiles) ? hostProfiles[0] : null
+        if (hostProfile?.max_guests && args.guests > hostProfile.max_guests) {
+          throw new Error('EXCEEDS_HOST_CAPACITY')
+        }
       }
 
       // Daily cap enforcement
@@ -280,7 +356,14 @@ const connectionResolvers = {
       const consentRequired = Boolean(custom?.consentRequired ?? true)
       const status = consentRequired ? 'pending' : 'connected'
       const connection = await strapi.entityService.create('api::connection.connection', {
-        data: { actor_user: user.id, target_user: targetId, status },
+        data: {
+          actor_user: user.id,
+          target_user: targetId,
+          status,
+          travel_date_from: args.travel_date_from || null,
+          travel_date_to: args.travel_date_to || null,
+          guest_count: args.guests || null,
+        },
       })
       await strapi.entityService.create('api::connection-event.connection-event', {
         data: { connection: connection.id, actor_user: user.id, target_user: targetId, type: 'requested' },
@@ -309,7 +392,7 @@ const connectionResolvers = {
 
         if (guestProfile[0] && hostProfile[0] && hostProfile[0].user?.email) {
           const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
-          const frontendUrl = process.env.FRONTEND_URL || 'https://app.toast2host.net'
+          const frontendUrl = resolveFrontendUrl(ctx)
           const logoUrl = `${serverUrl}/t2h_logo.png`
 
           await sendConnectionRequestEmail({
@@ -320,6 +403,9 @@ const connectionResolvers = {
             guestUniversity: guestProfile[0].university_name || 'Unknown University',
             guestBatch: guestProfile[0].batch_year ? String(guestProfile[0].batch_year) : 'Unknown',
             guestLinkedIn: guestProfile[0].linkedin_url || undefined,
+            travelDateFrom: args.travel_date_from || undefined,
+            travelDateTo: args.travel_date_to || undefined,
+            guestCount: args.guests || undefined,
             connectionsUrl: `${frontendUrl}/connections`,
             logoUrl,
           })
@@ -337,6 +423,26 @@ const connectionResolvers = {
       const connId = Number(args.id)
       const conn = await strapi.entityService.findOne('api::connection.connection', connId, { populate: { actor_user: true, target_user: true } })
       if (!conn || conn.status !== 'pending' || conn.target_user?.id !== user.id) throw new Error('Invalid connection')
+
+      // Multiple pending requests can compete for the same window, but approving this one
+      // must not double-book the host against an already-confirmed booking.
+      if (conn.travel_date_from && conn.travel_date_to) {
+        const hostOverlap = await strapi.entityService.findMany('api::connection.connection', {
+          filters: {
+            target_user: user.id,
+            status: 'connected',
+            id: { $ne: connId },
+            travel_date_from: { $lte: conn.travel_date_to },
+            travel_date_to: { $gte: conn.travel_date_from },
+          },
+          page: 1,
+          pageSize: 1,
+        })
+        if (Array.isArray(hostOverlap) && hostOverlap[0]) {
+          throw new Error('HOST_DOUBLE_BOOKED')
+        }
+      }
+
       const updated = await strapi.entityService.update('api::connection.connection', connId, { data: { status: 'connected' } })
       await strapi.entityService.create('api::connection-event.connection-event', {
         data: { connection: connId, actor_user: conn.actor_user?.id, target_user: user.id, type: 'approved' },
@@ -366,7 +472,7 @@ const connectionResolvers = {
 
         if (guestProfile[0] && hostProfile[0] && guestProfile[0].user?.email) {
           const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
-          const frontendUrl = process.env.FRONTEND_URL || 'https://app.toast2host.net'
+          const frontendUrl = resolveFrontendUrl(ctx)
           const logoUrl = `${serverUrl}/t2h_logo.png`
 
           await sendConnectionApprovedEmail({
@@ -377,12 +483,15 @@ const connectionResolvers = {
             hostUniversity: hostProfile[0].university_name || 'Unknown University',
             hostBatch: hostProfile[0].batch_year ? String(hostProfile[0].batch_year) : 'Unknown',
             hostLocation: hostProfile[0].location_text || undefined,
+            travelDateFrom: conn.travel_date_from || undefined,
+            travelDateTo: conn.travel_date_to || undefined,
+            guestCount: conn.guest_count || undefined,
             connectionsUrl: `${frontendUrl}/connections`,
             logoUrl,
           })
         }
       } catch (emailError) {
-        console.error('Failed to send connection approved email:', emailError)
+        console.error('Failed to send booking confirmation email:', emailError)
         // Don't fail the connection approval if email fails
       }
 

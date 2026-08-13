@@ -2,11 +2,78 @@
 
 This guide covers transactional email for connection-request / connection-approved notifications, sent from `src/utils/email-service.ts` via Strapi's built-in email plugin.
 
-**What's actually wired up in this codebase today is Brevo via SMTP (`@strapi/provider-email-nodemailer`)** — configured in `apps/backend/config/plugins.ts`. If you've seen older instructions in this repo mentioning Resend/SendGrid/AWS SES as the primary path, those don't match the current `plugins.ts` and would require swapping the provider package (see "Alternative Providers" below) rather than just adding an API key.
+**What's actually wired up in this codebase today is AWS SES (`@strapi/provider-email-amazon-ses`)** — configured in `apps/backend/config/plugins.ts`. If you've seen older instructions in this repo mentioning Brevo/Resend/SendGrid as the primary path, those don't match the current `plugins.ts` and would require swapping the provider package (see "Alternative Providers" below) rather than just adding an API key.
 
-## Current Setup: Brevo (SMTP) via Nodemailer
+## Current Setup: AWS SES
 
 `config/plugins.ts` already contains:
+
+```typescript
+email: {
+  config: {
+    provider: 'amazon-ses',
+    providerOptions: {
+      key: env('AWS_SES_KEY'),
+      secret: env('AWS_SES_SECRET'),
+      // Must be a full endpoint URL, not a bare region string - the provider
+      // parses the region back out of this via a `email.<region>.amazonaws.com`
+      // regex match. Passing just "us-east-1" here silently sets an invalid
+      // SESClient `endpoint` instead of the intended region.
+      amazon: `https://email.${env('AWS_SES_REGION', 'us-east-1')}.amazonaws.com`,
+    },
+    settings: {
+      defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
+      defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
+    },
+  },
+},
+```
+
+`@strapi/provider-email-amazon-ses` is already in `apps/backend/package.json` — no package install needed.
+
+### Step 1: Get AWS SES Credentials
+
+1. In the AWS Console, go to **SES → Verified identities** and verify the sender address/domain you'll use for `EMAIL_FROM` (SES will refuse to send from an unverified identity)
+2. If your SES account is still in the **sandbox**, recipient addresses must *also* be verified identities — request production access under **SES → Account dashboard** to send to arbitrary recipients
+3. Create an IAM user (or role) with `ses:SendEmail`/`ses:SendRawEmail` permission, and generate an **access key ID** and **secret access key** for it (IAM → Users → Security credentials → Create access key)
+4. Note which **region** your SES identity was verified in (e.g. `us-east-1`) — SES is region-scoped, so this must match
+
+### Step 2: Add Environment Variables
+
+Add to `apps/backend/.env`:
+
+```bash
+AWS_SES_KEY=AKIAXXXXXXXXXXXXXXXX
+AWS_SES_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+AWS_SES_REGION=us-east-1
+EMAIL_FROM=noreply@toast2host.net
+EMAIL_REPLY_TO=support@toast2host.net
+FRONTEND_URL=https://app.toast2host.net   # or http://localhost:3000 for local dev — used to build the "View Connection Request" link
+```
+
+`EMAIL_FROM` must be a verified identity in SES (or a domain you've verified there), or sends will be rejected.
+
+### Step 3: Restart Strapi
+
+```bash
+cd apps/backend
+pnpm dev
+```
+
+### Step 4: Test
+
+Trigger a real connection request from the frontend (Search → Book on another profile) — `connection.ts`'s resolver calls `sendConnectionRequestEmail` on request creation and `sendConnectionApprovedEmail` on acceptance. Both are **best-effort**: failures are caught and logged, not thrown, so a broken email config will never block the underlying booking action — check the Strapi console output for `Error sending connection request email:` if nothing arrives.
+
+## Alternative Providers
+
+Since Strapi's email plugin abstracts the provider, swapping providers means: install a different `@strapi/provider-email-*` package, and replace the `provider`/`providerOptions` block in `config/plugins.ts` — the `settings` block (`defaultFrom`/`defaultReplyTo`) and everything in `email-service.ts` stays the same either way.
+
+### Brevo (SMTP via Nodemailer)
+
+```bash
+cd apps/backend
+pnpm add @strapi/provider-email-nodemailer
+```
 
 ```typescript
 email: {
@@ -30,44 +97,14 @@ email: {
 },
 ```
 
-`@strapi/provider-email-nodemailer` is already in `apps/backend/package.json` — no package install needed.
-
-### Step 1: Create a Brevo Account and Get SMTP Credentials
-
-1. Sign up at https://www.brevo.com (formerly Sendinblue)
-2. Go to **Settings → SMTP & API → SMTP** in the Brevo dashboard
-3. Note your **SMTP login** (usually your Brevo account email) and generate an **SMTP key** (this is a separate secret from your account password)
-
-### Step 2: Add Environment Variables
-
-Add to `apps/backend/.env`:
-
 ```bash
 SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
 SMTP_USERNAME=your-brevo-smtp-login
 SMTP_PASSWORD=your-brevo-smtp-key
-EMAIL_FROM=noreply@toast2host.net
-EMAIL_REPLY_TO=support@toast2host.net
-FRONTEND_URL=https://app.toast2host.net   # or http://localhost:3000 for local dev — used to build the "View Connection Request" link
 ```
 
-`EMAIL_FROM` must be an address verified with Brevo (or a domain you've verified there), or sends will be rejected/bounced.
-
-### Step 3: Restart Strapi
-
-```bash
-cd apps/backend
-pnpm dev
-```
-
-### Step 4: Test
-
-Trigger a real connection request from the frontend (Search → Connect on another profile) — `connection.ts`'s resolver calls `sendConnectionRequestEmail` on request creation and `sendConnectionApprovedEmail` on acceptance. Both are **best-effort**: failures are caught and logged, not thrown, so a broken email config will never block the underlying connection action — check the Strapi console output for `Error sending connection request email:` if nothing arrives.
-
-## Alternative Providers
-
-Since Strapi's email plugin abstracts the provider, swapping providers means: install a different `@strapi/provider-email-*` package, and replace the `provider`/`providerOptions` block in `config/plugins.ts` — the `settings` block (`defaultFrom`/`defaultReplyTo`) and everything in `email-service.ts` stays the same either way.
+Sign up at https://www.brevo.com, then **Settings → SMTP & API → SMTP** for your SMTP login and key.
 
 ### Resend
 
@@ -122,37 +159,6 @@ SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxx
 
 Free tier: 100 emails/day. Create a key under Settings → API Keys in the SendGrid dashboard.
 
-### AWS SES
-
-```bash
-pnpm add @strapi/provider-email-amazon-ses
-```
-
-```typescript
-email: {
-  config: {
-    provider: 'amazon-ses',
-    providerOptions: {
-      key: env('AWS_SES_KEY'),
-      secret: env('AWS_SES_SECRET'),
-      amazon: env('AWS_SES_REGION', 'us-east-1'),
-    },
-    settings: {
-      defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
-      defaultReplyTo: env('EMAIL_REPLY_TO', 'support@toast2host.net'),
-    },
-  },
-},
-```
-
-```bash
-AWS_SES_KEY=AKIAXXXXXXXXXXXXXXXX
-AWS_SES_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-AWS_SES_REGION=us-east-1
-```
-
-Requires a verified sender identity/domain in the SES console, and production access requested if you're out of the SES sandbox.
-
 ## Email Templates
 
 Two HTML templates in `apps/backend/src/utils/email-templates/`:
@@ -169,9 +175,10 @@ Both are read from `src/utils/email-templates/` at send time via `fs.readFileSyn
 ### Emails not sending
 
 1. Check the Strapi backend console/logs for `Error sending connection request email:` or `Error sending connection approved email:` — these are logged, not thrown, so they're easy to miss if you're only watching the frontend
-2. Verify `SMTP_USERNAME`/`SMTP_PASSWORD` (or the equivalent for whatever provider you're using) are correct
-3. Check your provider's dashboard for bounce/rejection details
-4. Confirm `EMAIL_FROM` is a verified sender for your provider
+2. Verify `AWS_SES_KEY`/`AWS_SES_SECRET`/`AWS_SES_REGION` (or the equivalent for whatever provider you're using) are correct
+3. If SES is still in the sandbox, confirm the recipient is also a verified identity — sandbox SES silently rejects sends to unverified recipients
+4. Check your provider's dashboard for bounce/rejection details
+5. Confirm `EMAIL_FROM` is a verified sender for your provider
 
 ### Emails going to spam
 
@@ -187,11 +194,10 @@ Both are read from `src/utils/email-templates/` at send time via `fs.readFileSyn
 ## Environment Variables Summary
 
 ```bash
-# Brevo/Nodemailer (current default provider)
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_USERNAME=
-SMTP_PASSWORD=
+# AWS SES (current default provider)
+AWS_SES_KEY=
+AWS_SES_SECRET=
+AWS_SES_REGION=us-east-1
 
 # Shared across all providers
 EMAIL_FROM=noreply@toast2host.net
@@ -201,7 +207,7 @@ FRONTEND_URL=https://app.toast2host.net
 
 ## Next Steps
 
-1. Get Brevo SMTP credentials (or swap to an alternative provider above)
+1. Get AWS SES credentials and verify your sender identity (or swap to an alternative provider above)
 2. Add the env vars to `apps/backend/.env`
 3. Restart Strapi
 4. Trigger a real connection request from the frontend and confirm delivery

@@ -60,6 +60,10 @@ function ProfileContent() {
       }
       if (p.batch_year) setValue('batch_year', p.batch_year)
       setValue('host_mode', p.host_mode ?? false)
+      if (p.max_guests) setValue('max_guests', p.max_guests)
+      if (p.available_from) setValue('available_from', p.available_from)
+      if (p.available_to) setValue('available_to', p.available_to)
+      setValue('always_available', p.always_available ?? false)
       if (p.phone_number) setValue('phone_number', p.phone_number)
       if (p.profile_visibility && ['everyone', 'same_university', 'same_batch'].includes(p.profile_visibility)) {
         setValue('profile_visibility', p.profile_visibility as 'everyone' | 'same_university' | 'same_batch')
@@ -85,7 +89,10 @@ function ProfileContent() {
 
   const onSubmit = async (data: ProfileInput) => {
     try {
-      await updateMyProfile(data)
+      const payload = data.always_available
+        ? { ...data, available_from: null, available_to: null }
+        : data
+      await updateMyProfile(payload)
       await invalidateUser()
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
@@ -329,6 +336,48 @@ function ProfileContent() {
                 </button>
               </div>
             </div>
+
+            {/* Host capacity + availability - only relevant when Host Mode is on */}
+            {watch('host_mode') && (
+              <div className="space-y-3 p-4 bg-gray-50 rounded-xl border-2 border-gray-100">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Max Guests</label>
+                  <input
+                    className="w-full"
+                    type="number"
+                    min={1}
+                    placeholder="e.g. 2"
+                    {...register('max_guests', { valueAsNumber: true })}
+                  />
+                  {errors.max_guests && (
+                    <p className="text-red-600 text-sm font-medium">{errors.max_guests.message}</p>
+                  )}
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4"
+                    checked={!!watch('always_available')}
+                    onChange={(e) => setValue('always_available', e.target.checked)}
+                  />
+                  <span className="text-sm font-semibold text-gray-700">I'm always available</span>
+                </label>
+
+                {!watch('always_available') && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700">Available From</label>
+                      <input className="w-full" type="date" {...register('available_from')} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700">Available To</label>
+                      <input className="w-full" type="date" {...register('available_to')} />
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">Lets travelers filter for hosts who can fit their group and dates</p>
+              </div>
+            )}
 
             {/* Profile Visibility - new field */}
             <div className="space-y-2">

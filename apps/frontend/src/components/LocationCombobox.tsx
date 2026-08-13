@@ -14,9 +14,11 @@ export interface LocationComboboxProps {
   value?: LocationValue
   onChange: (v: LocationValue) => void
   label?: string
+  /** 'bare' drops the box border/shadow and helper text so it can sit as a segment inside another pill container. */
+  variant?: 'default' | 'bare'
 }
 
-export default function LocationCombobox({ value, onChange, label = 'Location' }: LocationComboboxProps) {
+export default function LocationCombobox({ value, onChange, label = 'Location', variant = 'default' }: LocationComboboxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
@@ -91,6 +93,34 @@ export default function LocationCombobox({ value, onChange, label = 'Location' }
       location_lng: undefined,
       location_scope: 'city',
     })
+  }
+
+  if (variant === 'bare') {
+    return (
+      <div className="flex flex-col items-start px-3 py-2 rounded-lg transition-colors hover:bg-gray-50 focus-within:bg-primary/5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary">
+        <label className="text-xs font-semibold text-gray-700">{label}</label>
+        <div className="relative w-full">
+          <input
+            ref={inputRef}
+            className="w-full border-0 p-0 pr-6 bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:ring-0 focus:outline-none"
+            placeholder="Search destinations"
+            defaultValue={value?.location_text || ''}
+          />
+          {value?.location_text && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              title="Clear location"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -3,12 +3,13 @@ import { getMe } from '@/lib/graphql/operations'
 
 export const CURRENT_USER_QUERY_KEY = ['currentUser'] as const
 
-export function useCurrentUser() {
+export function useCurrentUser(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: () => getMe({ skipCache: true }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
+    enabled: options?.enabled,
   })
 }
 

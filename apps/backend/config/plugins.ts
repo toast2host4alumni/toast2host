@@ -32,21 +32,18 @@ export default ({ env }: any) => ({
       },
     },
   },
-  // Email configuration - Brevo via Nodemailer
+  // Email configuration - AWS SES
   email: {
     config: {
-      provider: 'nodemailer',
+      provider: 'amazon-ses',
       providerOptions: {
-        host: env('SMTP_HOST', 'smtp-relay.brevo.com'),
-        port: env('SMTP_PORT', 587),
-        auth: {
-          user: env('SMTP_USERNAME'),
-          pass: env('SMTP_PASSWORD'),
-        },
-        secure: false,
-        tls: {
-          rejectUnauthorized: true,
-        },
+        key: env('AWS_SES_KEY'),
+        secret: env('AWS_SES_SECRET'),
+        // Must be a full endpoint URL, not a bare region string - the provider
+        // parses the region back out of this via a `email.<region>.amazonaws.com`
+        // regex match. Passing just "us-east-1" here silently sets an invalid
+        // SESClient `endpoint` instead of the intended region.
+        amazon: `https://email.${env('AWS_SES_REGION', 'us-east-1')}.amazonaws.com`,
       },
       settings: {
         defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),

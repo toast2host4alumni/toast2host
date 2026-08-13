@@ -493,6 +493,7 @@ export interface ApiConnectionConnection extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    guest_count: Schema.Attribute.Integer;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -506,6 +507,8 @@ export interface ApiConnectionConnection extends Struct.CollectionTypeSchema {
       'manyToOne',
       'plugin::users-permissions.user'
     >;
+    travel_date_from: Schema.Attribute.Date;
+    travel_date_to: Schema.Attribute.Date;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -632,6 +635,10 @@ export interface ApiUserProfileUserProfile extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    always_available: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    available_from: Schema.Attribute.Date;
+    available_to: Schema.Attribute.Date;
     batch_year: Schema.Attribute.Integer;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -650,6 +657,7 @@ export interface ApiUserProfileUserProfile extends Struct.CollectionTypeSchema {
     location_lng: Schema.Attribute.Decimal;
     location_scope: Schema.Attribute.Enumeration<['city', 'state', 'country']>;
     location_text: Schema.Attribute.String;
+    max_guests: Schema.Attribute.Integer;
     onboarding_completed: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
     phone_number: Schema.Attribute.String;

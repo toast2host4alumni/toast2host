@@ -9,6 +9,9 @@ interface ConnectionRequestEmailData {
   guestUniversity: string
   guestBatch: string
   guestLinkedIn?: string
+  travelDateFrom?: string
+  travelDateTo?: string
+  guestCount?: number
   connectionsUrl: string
   logoUrl: string
 }
@@ -21,6 +24,9 @@ interface ConnectionApprovedEmailData {
   hostUniversity: string
   hostBatch: string
   hostLocation?: string
+  travelDateFrom?: string
+  travelDateTo?: string
+  guestCount?: number
   connectionsUrl: string
   logoUrl: string
 }
@@ -46,6 +52,9 @@ export async function sendConnectionRequestEmail(
       .replace(/{{GUEST_FIRST_NAME}}/g, data.guestFirstName)
       .replace(/{{GUEST_UNIVERSITY}}/g, data.guestUniversity)
       .replace(/{{GUEST_BATCH}}/g, data.guestBatch)
+      .replace(/{{TRAVEL_DATE_FROM}}/g, data.travelDateFrom || 'Flexible')
+      .replace(/{{TRAVEL_DATE_TO}}/g, data.travelDateTo || 'Flexible')
+      .replace(/{{GUEST_COUNT}}/g, data.guestCount ? String(data.guestCount) : 'Not specified')
       .replace(/{{CONNECTIONS_URL}}/g, data.connectionsUrl)
       .replace(/{{LOGO_URL}}/g, data.logoUrl)
 
@@ -67,7 +76,7 @@ export async function sendConnectionRequestEmail(
       to: data.hostEmail,
       from: process.env.EMAIL_FROM || 'noreply@toast2host.net',
       replyTo: process.env.EMAIL_REPLY_TO || 'support@toast2host.net',
-      subject: '[Toast2Host] Connection Request',
+      subject: '[Toast2Host] Booking Request',
       html: htmlContent,
     })
 
@@ -99,6 +108,9 @@ export async function sendConnectionApprovedEmail(
       .replace(/{{HOST_EMAIL}}/g, data.hostEmail)
       .replace(/{{HOST_UNIVERSITY}}/g, data.hostUniversity)
       .replace(/{{HOST_BATCH}}/g, data.hostBatch)
+      .replace(/{{TRAVEL_DATE_FROM}}/g, data.travelDateFrom || 'Flexible')
+      .replace(/{{TRAVEL_DATE_TO}}/g, data.travelDateTo || 'Flexible')
+      .replace(/{{GUEST_COUNT}}/g, data.guestCount ? String(data.guestCount) : 'Not specified')
       .replace(/{{CONNECTIONS_URL}}/g, data.connectionsUrl)
       .replace(/{{LOGO_URL}}/g, data.logoUrl)
 
@@ -120,7 +132,7 @@ export async function sendConnectionApprovedEmail(
       to: data.guestEmail,
       from: process.env.EMAIL_FROM || 'noreply@toast2host.net',
       replyTo: process.env.EMAIL_REPLY_TO || 'support@toast2host.net',
-      subject: '[Toast2Host] Connection Approved',
+      subject: '[Toast2Host] Booking Confirmed',
       html: htmlContent,
     })
 

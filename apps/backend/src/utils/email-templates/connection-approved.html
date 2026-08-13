@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connection Approved - Toast2Host</title>
+  <title>Booking Confirmed - Toast2Host</title>
   <style>
     body {
       margin: 0;
@@ -145,18 +145,26 @@
 
       <!-- Success Highlight -->
       <div class="highlight-box">
-        <p class="highlight-text">🎉 Great news! {{HOST_FULL_NAME}} has accepted your connection request!</p>
+        <p class="highlight-text">🎉 Great news! {{HOST_FULL_NAME}} has confirmed your booking request!</p>
       </div>
 
       <div class="message">
-        You can now reach out directly and start building a meaningful connection with {{HOST_FULL_NAME}}.
+        Your stay is confirmed! You can now reach out directly to coordinate the details with {{HOST_FULL_NAME}}.
       </div>
 
       <!-- Host Profile Card -->
       <div class="profile-card">
         <div class="profile-info">
-          <div class="profile-label">Connected With</div>
+          <div class="profile-label">Booking Confirmed With</div>
           <div class="profile-value">{{HOST_FULL_NAME}}</div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-label">Dates of Stay</div>
+          <div class="profile-value">{{TRAVEL_DATE_FROM}} &rarr; {{TRAVEL_DATE_TO}}</div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-label">Guests</div>
+          <div class="profile-value">{{GUEST_COUNT}}</div>
         </div>
         <div class="profile-info">
           <div class="profile-label">University</div>
@@ -185,13 +193,13 @@
       </div>
 
       <div class="message">
-        Feel free to reach out and introduce yourself. We're excited to see how this connection grows!
+        Feel free to reach out to coordinate your visit. We're excited for your stay!
       </div>
 
       <!-- CTA Button -->
       <div class="button-container">
         <a href="{{CONNECTIONS_URL}}" class="button" style="display: inline-block; background-color: #ffc510; color: #000000; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); border: none;">
-          <span style="color: #000000; text-decoration: none;">View My Connections</span>
+          <span style="color: #000000; text-decoration: none;">View My Bookings</span>
         </a>
       </div>
     </div>

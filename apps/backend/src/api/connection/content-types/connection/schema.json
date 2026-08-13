@@ -22,6 +22,15 @@
       "type": "enumeration",
       "enum": ["pending", "connected", "rejected"],
       "required": true
+    },
+    "travel_date_from": {
+      "type": "date"
+    },
+    "travel_date_to": {
+      "type": "date"
+    },
+    "guest_count": {
+      "type": "integer"
     }
   }
 }

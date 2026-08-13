@@ -40,6 +40,10 @@ playwright/.auth/
 # Deploy artifacts
 *.zip
 
+# DB backups (contain real user data)
+/backups/
+*.sql
+
 # OS
 .DS_Store
 Thumbs.db

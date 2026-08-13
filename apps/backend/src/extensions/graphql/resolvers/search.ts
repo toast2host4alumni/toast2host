@@ -12,6 +12,9 @@ type Args = {
   page?: number | null
   pageSize?: number | null
   hosts_only?: boolean | null
+  travel_date_from?: string | null
+  travel_date_to?: string | null
+  guests?: number | null
 }
 
 const toNumber = (v: any) => (typeof v === 'number' ? v : v ? Number(v) : undefined)
@@ -101,6 +104,28 @@ const searchResolvers = {
         filters.host_mode = true
       }
 
+      // Filter by guest capacity - only hosts who set a capacity that fits
+      if (args.guests) {
+        filters.max_guests = { $gte: args.guests }
+      }
+
+      // Filter by travel date range - only hosts whose availability window covers it,
+      // or who marked themselves always available. Uses $and (rather than a top-level
+      // $or) so it composes safely with the university/location filters below, which
+      // also assign filters.$or and would otherwise clobber this condition.
+      if (args.travel_date_from && args.travel_date_to) {
+        const availabilityFilter = {
+          $or: [
+            { always_available: true },
+            {
+              available_from: { $lte: args.travel_date_from },
+              available_to: { $gte: args.travel_date_to },
+            },
+          ],
+        }
+        filters.$and = filters.$and ? [...filters.$and, availabilityFilter] : [availabilityFilter]
+      }
+
       // Location filters
       const lat = toNumber(args.lat)
       const lng = toNumber(args.lng)
@@ -180,8 +205,12 @@ const searchResolvers = {
         records = withDist.slice(start, end)
       }
 
-      // Build connection status map
+      // Build connection status map, plus a set of "previous hosts" - profiles I (as
+      // guest) have a confirmed booking with. Used for the "Show only my previous hosts"
+      // filter, which is deliberately one-directional: a past guest of mine showing up
+      // as "connected" shouldn't count as a host I can filter by.
       let connectionMap = new Map<number, string>()
+      const previousHostIds = new Set<number>()
       if (actorId) {
         const conns = await strapi.entityService.findMany('api::connection.connection', {
           filters: {
@@ -191,6 +220,10 @@ const searchResolvers = {
           page: 1,
           pageSize: 500,
         })
+        // A pair can now have multiple connection rows over time (one per booking).
+        // 'pending' always wins (it's the only status that should block a new request);
+        // otherwise prefer 'connected' so a past stay is reflected, but neither status
+        // permanently prevents booking the same host again for a new trip.
         for (const c of conns) {
           // Handle both populated (object) and unpopulated (number) cases
           const actorUserId = typeof c.actor_user === 'object' ? c.actor_user?.id : c.actor_user
@@ -198,8 +231,13 @@ const searchResolvers = {
           const otherId = actorUserId === actorId ? targetUserId : actorUserId
           if (!otherId) continue
           const prev = connectionMap.get(otherId)
-          if (c.status === 'connected') connectionMap.set(otherId, 'connected')
+          if (c.status === 'pending') connectionMap.set(otherId, 'pending')
+          else if (c.status === 'connected' && prev !== 'pending') connectionMap.set(otherId, 'connected')
           else if (!prev) connectionMap.set(otherId, c.status)
+
+          if (actorUserId === actorId && c.status === 'connected') {
+            previousHostIds.add(otherId)
+          }
         }
       }
 
@@ -239,9 +277,9 @@ const searchResolvers = {
         }
       })
 
-      // Filter by connection status if requested
+      // Filter to only previous hosts (bookings I made as the guest) if requested
       if (args.connected_only && actorId) {
-        results = results.filter((r) => r.connectionStatus === 'connected')
+        results = results.filter((r) => previousHostIds.has(Number(r.userId)))
       }
 
       // Filter by profile visibility

@@ -24,6 +24,10 @@ const ME_QUERY = `
         batch_year
         onboarding_completed
         host_mode
+        max_guests
+        available_from
+        available_to
+        always_available
         phone_number
         profile_visibility
         updated_at
@@ -52,6 +56,10 @@ export async function getMe(options?: { skipCache?: boolean }) {
           batch_year?: number
           onboarding_completed?: boolean
           host_mode?: boolean
+          max_guests?: number
+          available_from?: string
+          available_to?: string
+          always_available?: boolean
           phone_number?: string
           profile_visibility?: 'everyone' | 'same_university' | 'same_batch'
           updated_at: string
@@ -83,14 +91,22 @@ export async function updateMyProfile(input: UpdateMyProfileInput) {
 }
 
 const CREATE_CONNECTION = `
-  mutation RequestConnection($targetUserId: ID!) { requestConnection(targetUserId: $targetUserId) { id status } }
+  mutation RequestConnection($targetUserId: ID!, $travel_date_from: String, $travel_date_to: String, $guests: Int) {
+    requestConnection(targetUserId: $targetUserId, travel_date_from: $travel_date_from, travel_date_to: $travel_date_to, guests: $guests) { id status }
+  }
 ` as const
 
-export async function createConnection(targetUserId: string) {
+export type CreateConnectionOptions = {
+  travel_date_from?: string
+  travel_date_to?: string
+  guests?: number
+}
+
+export async function createConnection(targetUserId: string, options?: CreateConnectionOptions) {
   const res = await graphqlClient
-    .mutation<{ requestConnection: { id: string; status: string } }, { targetUserId: string }>(
+    .mutation<{ requestConnection: { id: string; status: string } }, { targetUserId: string } & CreateConnectionOptions>(
       CREATE_CONNECTION,
-      { targetUserId }
+      { targetUserId, ...options }
     )
     .toPromise()
   if (res.error) throw res.error
@@ -132,6 +148,9 @@ const MY_PENDING = `
         linkedinUrl
         email
       }
+      travelDateFrom
+      travelDateTo
+      guestCount
     }
   }
 ` as const
@@ -150,6 +169,9 @@ export type PendingConnection = {
     linkedinUrl?: string | null
     email?: string | null
   }
+  travelDateFrom?: string | null
+  travelDateTo?: string | null
+  guestCount?: number | null
 }
 
 export async function getMyPendingConnections(): Promise<PendingConnection[]> {
@@ -174,6 +196,9 @@ const MY_OUTGOING_PENDING = `
         linkedinUrl
         email
       }
+      travelDateFrom
+      travelDateTo
+      guestCount
     }
   }
 ` as const
@@ -192,6 +217,9 @@ export type OutgoingPendingConnection = {
     linkedinUrl?: string | null
     email?: string | null
   }
+  travelDateFrom?: string | null
+  travelDateTo?: string | null
+  guestCount?: number | null
 }
 
 export async function getMyOutgoingPendingConnections(): Promise<OutgoingPendingConnection[]> {
@@ -200,38 +228,68 @@ export async function getMyOutgoingPendingConnections(): Promise<OutgoingPending
   return res.data?.myOutgoingPendingConnections ?? []
 }
 
-const MY_CONNECTIONS = `
-  query MyConnections {
-    myConnections {
-      userId
-      name
-      university
-      location
-      profilePhotoUrl
-      batchYear
-      linkedinUrl
-      email
-      connectedAt
-    }
+const CONFIRMED_BOOKING_FIELDS = `
+  id
+  status
+  createdAt
+  confirmedAt
+  otherUser {
+    userId
+    name
+    university
+    location
+    profilePhotoUrl
+    batchYear
+    linkedinUrl
+    email
+  }
+  travelDateFrom
+  travelDateTo
+  guestCount
+` as const
+
+const MY_HOSTED_BOOKINGS = `
+  query MyHostedBookings {
+    myHostedBookings { ${CONFIRMED_BOOKING_FIELDS} }
   }
 ` as const
 
-export type ConnectedUser = {
-  userId: string
-  name: string
-  university?: string | null
-  location?: string | null
-  profilePhotoUrl?: string | null
-  batchYear?: number | null
-  linkedinUrl?: string | null
-  email: string
-  connectedAt: string
+const MY_TRIPS = `
+  query MyTrips {
+    myTrips { ${CONFIRMED_BOOKING_FIELDS} }
+  }
+` as const
+
+export type ConfirmedBooking = {
+  id: string
+  status: string
+  createdAt: string
+  confirmedAt?: string | null
+  otherUser: {
+    userId: string
+    name: string
+    university?: string | null
+    location?: string | null
+    profilePhotoUrl?: string | null
+    batchYear?: number | null
+    linkedinUrl?: string | null
+    email?: string | null
+  }
+  travelDateFrom?: string | null
+  travelDateTo?: string | null
+  guestCount?: number | null
 }
 
-export async function getMyConnections(): Promise<ConnectedUser[]> {
-  const res = await graphqlClient.query<{ myConnections: ConnectedUser[] }>(MY_CONNECTIONS, {}, { requestPolicy: 'network-only' }).toPromise()
+export async function getMyHostedBookings(): Promise<ConfirmedBooking[]> {
+  const res = await graphqlClient.query<{ myHostedBookings: ConfirmedBooking[] }>(MY_HOSTED_BOOKINGS, {}, { requestPolicy: 'network-only' }).toPromise()
   if (res.error) throw res.error
-  return res.data?.myConnections ?? []
+  return res.data?.myHostedBookings ?? []
+}
+
+export async function getMyTrips(): Promise<ConfirmedBooking[]> {
+  const res = await graphqlClient.query<{ myTrips: ConfirmedBooking[] }>(MY_TRIPS, {}, { requestPolicy: 'network-only' }).toPromise()
+  if (res.error) throw res.error
+  return res.data?.myTrips ?? []
 }
 
 const MY_PRIVACY = `

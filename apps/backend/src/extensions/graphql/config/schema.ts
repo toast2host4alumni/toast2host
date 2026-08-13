@@ -27,6 +27,10 @@ const typeDefs = /* GraphQL */ `
     batch_year: Int
     onboarding_completed: Boolean
     host_mode: Boolean
+    max_guests: Int
+    available_from: String
+    available_to: String
+    always_available: Boolean
     phone_number: String
     profile_visibility: String
   }
@@ -45,6 +49,10 @@ const typeDefs = /* GraphQL */ `
     batch_year: Int
     onboarding_completed: Boolean
     host_mode: Boolean
+    max_guests: Int
+    available_from: String
+    available_to: String
+    always_available: Boolean
     phone_number: String
     profile_visibility: String
     updated_at: String
@@ -68,6 +76,10 @@ const typeDefs = /* GraphQL */ `
     batch_year: Int
     onboarding_completed: Boolean
     host_mode: Boolean
+    max_guests: Int
+    available_from: String
+    available_to: String
+    always_available: Boolean
     phone_number: String
     profile_visibility: String
     updated_at: String
@@ -108,6 +120,9 @@ const typeDefs = /* GraphQL */ `
     status: String!
     createdAt: String!
     requester: ConnectionRequester!
+    travelDateFrom: String
+    travelDateTo: String
+    guestCount: Int
   }
 
   type OutgoingPendingConnection {
@@ -115,18 +130,20 @@ const typeDefs = /* GraphQL */ `
     status: String!
     createdAt: String!
     targetUser: ConnectionRequester!
+    travelDateFrom: String
+    travelDateTo: String
+    guestCount: Int
   }
 
-  type ConnectedUser {
-    userId: ID!
-    name: String!
-    university: String
-    location: String
-    profilePhotoUrl: String
-    batchYear: Int
-    linkedinUrl: String
-    email: String!
-    connectedAt: String!
+  type ConfirmedBooking {
+    id: ID!
+    status: String!
+    createdAt: String!
+    confirmedAt: String
+    otherUser: ConnectionRequester!
+    travelDateFrom: String
+    travelDateTo: String
+    guestCount: Int
   }
 
   enum CustomPrivacyRequestType {
@@ -165,7 +182,8 @@ const typeDefs = /* GraphQL */ `
     myPrivacyRequests: [CustomPrivacyRequest!]!
     myPendingConnections: [PendingConnectionRequest!]!
     myOutgoingPendingConnections: [OutgoingPendingConnection!]!
-    myConnections: [ConnectedUser!]!
+    myHostedBookings: [ConfirmedBooking!]!
+    myTrips: [ConfirmedBooking!]!
     searchUsers(
       location: String
       lat: Float
@@ -180,13 +198,16 @@ const typeDefs = /* GraphQL */ `
       page: Int
       pageSize: Int
       hosts_only: Boolean
+      travel_date_from: String
+      travel_date_to: String
+      guests: Int
     ): [SearchUserResult!]!
   }
 
   extend type Mutation {
     updateMyProfile(input: UpdateProfileInput!): UpdateProfileResult!
     submitPrivacyRequest(type: CustomPrivacyRequestType!): CustomPrivacyRequest!
-    requestConnection(targetUserId: ID!): CustomConnection!
+    requestConnection(targetUserId: ID!, travel_date_from: String, travel_date_to: String, guests: Int): CustomConnection!
     acceptConnection(id: ID!): CustomConnection!
     denyConnection(id: ID!): CustomConnection!
   }

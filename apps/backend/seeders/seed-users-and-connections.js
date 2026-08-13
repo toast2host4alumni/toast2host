@@ -108,19 +108,56 @@ function seedUsersAndConnections() {
       INSERT INTO user_profiles (
         document_id, first_name, last_name, university_name, location_text,
         location_lat, location_lng, location_scope, batch_year,
-        onboarding_completed,
+        onboarding_completed, profile_visibility,
+        host_mode, max_guests, available_from, available_to,
         created_at, updated_at, published_at, locale
       ) VALUES (
         @document_id, @first_name, @last_name, @university_name, @location_text,
         @location_lat, @location_lng, @location_scope, @batch_year,
-        1,
+        1, 'everyone',
+        @host_mode, @max_guests, @available_from, @available_to,
         @created_at, @updated_at, @published_at, NULL
       )
     `);
 
+    function toDateStr(d) {
+      return d.toISOString().slice(0, 10);
+    }
+
+    // ~40% of dummy alumni are hosts with a guest capacity and an availability window
+    // spanning today outward, so When/Who search filters have real matches to find.
+    function generateHostFields() {
+      const isHost = Math.random() < 0.4;
+      if (!isHost) {
+        return { host_mode: 0, max_guests: null, available_from: null, available_to: null };
+      }
+      const today = new Date();
+      const startOffsetDays = Math.floor(Math.random() * 10); // starts within next 10 days
+      const windowLengthDays = 14 + Math.floor(Math.random() * 45); // 2-8 week window
+      const from = new Date(today);
+      from.setDate(from.getDate() + startOffsetDays);
+      const to = new Date(from);
+      to.setDate(to.getDate() + windowLengthDays);
+      return {
+        host_mode: 1,
+        max_guests: 1 + Math.floor(Math.random() * 6), // 1-6 guests
+        available_from: toDateStr(from),
+        available_to: toDateStr(to),
+      };
+    }
+
     const linkProfileToUser = db.prepare(`
       INSERT INTO user_profiles_user_lnk (user_profile_id, user_id)
       VALUES (@profile_id, @user_id)
+    `);
+
+    // Without a role link, seeded users exist but can never authenticate (Strapi's
+    // users-permissions auth rejects users with no role) - assign the same
+    // "Authenticated" role real signed-up users get.
+    const authenticatedRole = db.prepare(`SELECT id FROM up_roles WHERE type = 'authenticated' LIMIT 1`).get();
+    const linkUserRole = db.prepare(`
+      INSERT INTO up_users_role_lnk (user_id, role_id, user_ord)
+      VALUES (@user_id, @role_id, @user_id)
     `);
 
     const firstNames = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry', 'Iris', 'Jack', 'Kate', 'Leo', 'Mia', 'Noah', 'Olivia'];
@@ -135,6 +172,7 @@ function seedUsersAndConnections() {
         const location = generateRandomLocation();
         const university = generateRandomUniversity();
         const batchYear = 2015 + Math.floor(Math.random() * 10);
+        const hostFields = generateHostFields();
 
         // Insert user
         const userResult = insertUser.run({
@@ -148,6 +186,10 @@ function seedUsersAndConnections() {
 
         const userId = userResult.lastInsertRowid;
 
+        if (authenticatedRole) {
+          linkUserRole.run({ user_id: userId, role_id: authenticatedRole.id });
+        }
+
         // Insert profile
         const profileResult = insertProfile.run({
           document_id: generateDocumentId(),
@@ -159,6 +201,10 @@ function seedUsersAndConnections() {
           location_lng: location.lng,
           location_scope: location.scope,
           batch_year: batchYear,
+          host_mode: hostFields.host_mode,
+          max_guests: hostFields.max_guests,
+          available_from: hostFields.available_from,
+          available_to: hostFields.available_to,
           created_at: now,
           updated_at: now,
           published_at: now,
@@ -172,11 +218,19 @@ function seedUsersAndConnections() {
           user_id: userId,
         });
 
-        dummyUsers.push({ userId, name: `${firstName} ${lastName}` });
+        dummyUsers.push({
+          userId,
+          name: `${firstName} ${lastName}`,
+          host: hostFields.host_mode
+            ? `${hostFields.max_guests} guests, ${hostFields.available_from} → ${hostFields.available_to}`
+            : null,
+        });
       }
     })();
 
-    console.log(`✅ Created ${NUM_USERS} dummy users`);
+    const hostCount = dummyUsers.filter((u) => u.host).length;
+    console.log(`✅ Created ${NUM_USERS} dummy users (${hostCount} are hosts with capacity/availability set)`);
+    dummyUsers.filter((u) => u.host).forEach((u) => console.log(`  🏠 ${u.name}: ${u.host}`));
     console.log('');
 
     // Create connections with some users

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { isAuthenticated, removeAuthToken } from '@/lib/auth'
 import { getMyPendingConnections } from '@/lib/graphql/operations'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 export default function Header() {
   const navigate = useNavigate()
@@ -10,6 +11,11 @@ export default function Header() {
   const queryClient = useQueryClient()
   const [isAuthed, setIsAuthed] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
+  const { data: currentUser } = useCurrentUser({ enabled: isAuthed })
+  const loggedInName = currentUser?.profile
+    ? [currentUser.profile.first_name, currentUser.profile.last_name].filter(Boolean).join(' ')
+    : ''
+  const loggedInLabel = loggedInName || currentUser?.email || ''
 
   useEffect(() => {
     // Check auth on mount and whenever pathname changes (after login redirect)
@@ -75,7 +81,7 @@ export default function Header() {
                 to="/connections"
                 className="relative text-gray-900 hover:text-gray-700 font-semibold transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
               >
-                <span className="hidden md:inline">Connections</span>
+                <span className="hidden md:inline">Bookings</span>
                 <svg className="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -94,6 +100,17 @@ export default function Header() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </Link>
+              {loggedInLabel && (
+                <span
+                  className="hidden md:inline-flex items-center gap-1.5 text-gray-900 font-semibold text-xs bg-black/10 px-3 py-1.5 rounded-full truncate max-w-[180px]"
+                  title={`Signed in as ${loggedInLabel}`}
+                >
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  {loggedInLabel}
+                </span>
+              )}
               <button
                 onClick={handleLogout}
                 className="bg-black text-primary rounded-lg px-5 py-2 text-sm font-bold hover:bg-gray-900 ml-2 transition-all"

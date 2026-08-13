@@ -61,6 +61,19 @@
       "type": "boolean",
       "default": false
     },
+    "max_guests": {
+      "type": "integer"
+    },
+    "available_from": {
+      "type": "date"
+    },
+    "available_to": {
+      "type": "date"
+    },
+    "always_available": {
+      "type": "boolean",
+      "default": false
+    },
     "phone_number": {
       "type": "string"
     },

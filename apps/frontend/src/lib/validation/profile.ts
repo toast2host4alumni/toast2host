@@ -23,6 +23,10 @@ export const profileSchema = z.object({
   location_scope: z.enum(['city', 'state', 'country']).optional(),
   batch_year: z.number({ error: 'Batch year is required' }).int().min(1900, 'Batch year must be 1900 or later').max(2100, 'Batch year cannot exceed 2100'),
   host_mode: z.boolean().optional(),
+  max_guests: z.number().int().min(1, 'Must be at least 1').optional(),
+  available_from: z.string().optional().nullable(),
+  available_to: z.string().optional().nullable(),
+  always_available: z.boolean().optional(),
   phone_number: z.string().optional(),
   profile_visibility: z.enum(['everyone', 'same_university', 'same_batch']).optional(),
 })
