@@ -644,7 +644,7 @@ export interface ApiUserProfileUserProfile extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     first_name: Schema.Attribute.String;
-    host_mode: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    host_mode: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     last_name: Schema.Attribute.String;
     linkedin_url: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;

@@ -59,7 +59,7 @@
     },
     "host_mode": {
       "type": "boolean",
-      "default": false
+      "default": true
     },
     "max_guests": {
       "type": "integer"
