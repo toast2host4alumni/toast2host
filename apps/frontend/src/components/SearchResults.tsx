@@ -199,6 +199,8 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
         toast.error('This host is already booked for those dates')
       } else if (String(msg).includes('EXCEEDS_HOST_CAPACITY')) {
         toast.error("This host can't fit that many guests")
+      } else if (String(msg).includes('HOST_MODE_DISABLED')) {
+        toast.error('This host is not currently accepting bookings')
       } else {
         setError('Unable to connect')
         toast.error('Unable to send connection request')

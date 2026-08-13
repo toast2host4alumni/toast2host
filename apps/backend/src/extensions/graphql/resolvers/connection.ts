@@ -278,6 +278,18 @@ const connectionResolvers = {
       const targetId = Number(args.targetUserId)
       if (!targetId || targetId === user.id) throw new Error('Invalid target')
 
+      // A host who has turned off Host Mode isn't accepting bookings, regardless of
+      // whether the guest found them via search (which already filters on this) or
+      // some other route (a stale link, a previous search result, etc).
+      const hostProfiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
+        filters: { user: targetId },
+        limit: 1,
+      })
+      const hostProfile = Array.isArray(hostProfiles) ? hostProfiles[0] : null
+      if (!hostProfile?.host_mode) {
+        throw new Error('HOST_MODE_DISABLED')
+      }
+
       // Only block on an already-pending request for this pair (either direction) -
       // avoids spamming duplicate simultaneous requests. A prior connected or rejected
       // booking does NOT block a new one: each stay is booked and approved independently,
@@ -336,15 +348,8 @@ const connectionResolvers = {
       }
 
       // Enforce the host's stated guest capacity, if they've set one
-      if (args.guests) {
-        const hostProfiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
-          filters: { user: targetId },
-          limit: 1,
-        })
-        const hostProfile = Array.isArray(hostProfiles) ? hostProfiles[0] : null
-        if (hostProfile?.max_guests && args.guests > hostProfile.max_guests) {
-          throw new Error('EXCEEDS_HOST_CAPACITY')
-        }
+      if (args.guests && hostProfile?.max_guests && args.guests > hostProfile.max_guests) {
+        throw new Error('EXCEEDS_HOST_CAPACITY')
       }
 
       // Daily cap enforcement
