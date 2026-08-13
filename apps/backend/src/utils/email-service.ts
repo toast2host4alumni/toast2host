@@ -31,6 +31,16 @@ interface ConnectionApprovedEmailData {
   logoUrl: string
 }
 
+interface ConnectionUnavailableEmailData {
+  guestEmail: string
+  guestFirstName: string
+  hostFullName: string
+  travelDateFrom?: string
+  travelDateTo?: string
+  searchUrl: string
+  logoUrl: string
+}
+
 export async function sendConnectionRequestEmail(
   data: ConnectionRequestEmailData
 ): Promise<void> {
@@ -140,5 +150,88 @@ export async function sendConnectionApprovedEmail(
   } catch (error) {
     console.error('Error sending connection approved email:', error)
     // Don't throw error - we don't want to fail the connection approval if email fails
+  }
+}
+
+export async function sendConnectionUnavailableEmail(
+  data: ConnectionUnavailableEmailData
+): Promise<void> {
+  try {
+    // Read the HTML template from src folder (not dist)
+    const templatePath = path.join(
+      process.cwd(),
+      'src',
+      'utils',
+      'email-templates',
+      'connection-unavailable.html'
+    )
+    let htmlContent = fs.readFileSync(templatePath, 'utf-8')
+
+    htmlContent = htmlContent
+      .replace(/{{GUEST_FIRST_NAME}}/g, data.guestFirstName)
+      .replace(/{{HOST_FULL_NAME}}/g, data.hostFullName)
+      .replace(/{{TRAVEL_DATE_FROM}}/g, data.travelDateFrom || 'Flexible')
+      .replace(/{{TRAVEL_DATE_TO}}/g, data.travelDateTo || 'Flexible')
+      .replace(/{{SEARCH_URL}}/g, data.searchUrl)
+      .replace(/{{LOGO_URL}}/g, data.logoUrl)
+
+    await strapi.plugin('email').service('email').send({
+      to: data.guestEmail,
+      from: process.env.EMAIL_FROM || 'noreply@toast2host.net',
+      replyTo: process.env.EMAIL_REPLY_TO || 'support@toast2host.net',
+      subject: '[Toast2Host] Your booking request is no longer available',
+      html: htmlContent,
+    })
+
+    console.log(`Connection unavailable email sent to ${data.guestEmail}`)
+  } catch (error) {
+    console.error('Error sending connection unavailable email:', error)
+    // Don't throw error - we don't want to fail the connection approval if email fails
+  }
+}
+
+interface BookingCancelledEmailData {
+  recipientEmail: string
+  recipientFirstName: string
+  cancellerFullName: string
+  travelDateFrom?: string
+  travelDateTo?: string
+  bookingsUrl: string
+  logoUrl: string
+}
+
+export async function sendBookingCancelledEmail(
+  data: BookingCancelledEmailData
+): Promise<void> {
+  try {
+    const templatePath = path.join(
+      process.cwd(),
+      'src',
+      'utils',
+      'email-templates',
+      'booking-cancelled.html'
+    )
+    let htmlContent = fs.readFileSync(templatePath, 'utf-8')
+
+    htmlContent = htmlContent
+      .replace(/{{RECIPIENT_FIRST_NAME}}/g, data.recipientFirstName)
+      .replace(/{{CANCELLER_FULL_NAME}}/g, data.cancellerFullName)
+      .replace(/{{TRAVEL_DATE_FROM}}/g, data.travelDateFrom || 'Flexible')
+      .replace(/{{TRAVEL_DATE_TO}}/g, data.travelDateTo || 'Flexible')
+      .replace(/{{BOOKINGS_URL}}/g, data.bookingsUrl)
+      .replace(/{{LOGO_URL}}/g, data.logoUrl)
+
+    await strapi.plugin('email').service('email').send({
+      to: data.recipientEmail,
+      from: process.env.EMAIL_FROM || 'noreply@toast2host.net',
+      replyTo: process.env.EMAIL_REPLY_TO || 'support@toast2host.net',
+      subject: '[Toast2Host] Booking Cancelled',
+      html: htmlContent,
+    })
+
+    console.log(`Booking cancelled email sent to ${data.recipientEmail}`)
+  } catch (error) {
+    console.error('Error sending booking cancelled email:', error)
+    // Don't throw error - we don't want to fail the cancellation if email fails
   }
 }

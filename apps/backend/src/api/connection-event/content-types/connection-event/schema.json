@@ -25,7 +25,7 @@
     },
     "type": {
       "type": "enumeration",
-      "enum": ["requested", "approved", "rejected", "revealed"],
+      "enum": ["requested", "approved", "rejected", "revealed", "cancelled"],
       "required": true
     },
     "context": { "type": "string" }

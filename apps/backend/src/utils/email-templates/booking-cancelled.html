@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Cancelled - Toast2Host</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f9fafb;
+      color: #111827;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border: 2px solid #000000;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .header {
+      background-color: #ffc510;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .logo {
+      max-width: 180px;
+      height: auto;
+    }
+    .content {
+      padding: 40px 32px;
+    }
+    .greeting {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 24px;
+    }
+    .message {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #374151;
+      margin-bottom: 16px;
+    }
+    .highlight-box {
+      background-color: #fee2e2;
+      border-left: 4px solid #dc2626;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+    .highlight-text {
+      font-size: 17px;
+      font-weight: 600;
+      color: #991b1b;
+      margin: 0;
+    }
+    .profile-card {
+      background: transparent;
+      border-radius: 0;
+      padding: 24px 0;
+      margin: 32px 0;
+      border: none;
+    }
+    .profile-info {
+      margin-bottom: 12px;
+    }
+    .profile-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .profile-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .button-container {
+      text-align: center;
+      margin: 32px 0;
+    }
+    .button {
+      display: inline-block;
+      background-color: #ffc510;
+      color: #000000 !important;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border: none;
+      transition: all 0.3s ease;
+    }
+    .button:hover {
+      background-color: #ffb800;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .footer {
+      background-color: #000000;
+      padding: 24px 32px;
+      text-align: center;
+      font-size: 14px;
+      color: #ffffff;
+      border-top: 2px solid #000000;
+    }
+    .footer a {
+      color: #ffc510;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .divider {
+      height: 1px;
+      background-color: #e5e7eb;
+      margin: 24px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header with Logo -->
+    <div class="header">
+      <img src="{{LOGO_URL}}" alt="Toast2Host" class="logo" />
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+      <div class="greeting">Hi {{RECIPIENT_FIRST_NAME}},</div>
+
+      <div class="highlight-box">
+        <p class="highlight-text">{{CANCELLER_FULL_NAME}} has cancelled your confirmed booking</p>
+      </div>
+
+      <div class="message">
+        Your booking with {{CANCELLER_FULL_NAME}} for the dates below is no longer happening.
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-info">
+          <div class="profile-label">Cancelled Dates</div>
+          <div class="profile-value">{{TRAVEL_DATE_FROM}} &rarr; {{TRAVEL_DATE_TO}}</div>
+        </div>
+      </div>
+
+      <div class="message">
+        Sorry for the disruption. Head back to Toast2Host to find a new host or manage your bookings.
+      </div>
+
+      <!-- CTA Button -->
+      <div class="button-container">
+        <a href="{{BOOKINGS_URL}}" class="button" style="display: inline-block; background-color: #ffc510; color: #000000; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); border: none;">
+          <span style="color: #000000; text-decoration: none;">View My Bookings</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p style="margin: 0 0 8px 0;">
+        This email was sent by <a href="https://toast2host.net">Toast2Host</a>
+      </p>
+      <p style="margin: 0; font-size: 13px;">
+        Alumni Connect Platform • Building Meaningful Connections
+      </p>
+    </div>
+  </div>
+</body>
+</html>

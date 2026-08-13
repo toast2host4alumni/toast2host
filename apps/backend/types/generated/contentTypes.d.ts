@@ -466,7 +466,7 @@ export interface ApiConnectionEventConnectionEvent
       'plugin::users-permissions.user'
     >;
     type: Schema.Attribute.Enumeration<
-      ['requested', 'approved', 'rejected', 'revealed']
+      ['requested', 'approved', 'rejected', 'revealed', 'cancelled']
     > &
       Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
@@ -501,7 +501,9 @@ export interface ApiConnectionConnection extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
-    status: Schema.Attribute.Enumeration<['pending', 'connected', 'rejected']> &
+    status: Schema.Attribute.Enumeration<
+      ['pending', 'connected', 'rejected', 'cancelled']
+    > &
       Schema.Attribute.Required;
     target_user: Schema.Attribute.Relation<
       'manyToOne',

@@ -113,6 +113,9 @@ const typeDefs = /* GraphQL */ `
   type CustomConnection {
     id: ID!
     status: String!
+    # Only populated by acceptConnection - ids of other pending requests for the
+    # same host/overlapping dates that were auto-rejected as a result.
+    autoRejectedIds: [ID!]
   }
 
   type PendingConnectionRequest {
@@ -210,6 +213,7 @@ const typeDefs = /* GraphQL */ `
     requestConnection(targetUserId: ID!, travel_date_from: String, travel_date_to: String, guests: Int): CustomConnection!
     acceptConnection(id: ID!): CustomConnection!
     denyConnection(id: ID!): CustomConnection!
+    cancelConnection(id: ID!): CustomConnection!
   }
 `
 

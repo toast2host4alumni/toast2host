@@ -15,13 +15,18 @@ createRoot(document.getElementById('root')!).render(
         <App />
         <Toaster
           position="top-center"
+          duration={6000}
+          closeButton
           toastOptions={{
             style: {
               fontFamily: 'inherit',
             },
             classNames: {
-              success: 'bg-success text-success-foreground',
-              error: 'bg-error text-error-foreground',
+              default: 'toast-base toast-default',
+              success: 'toast-base toast-success',
+              error: 'toast-base toast-error',
+              info: 'toast-base toast-info',
+              closeButton: 'toast-close-button',
             },
           }}
         />

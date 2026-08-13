@@ -9,6 +9,7 @@ import { updateMyProfile, createPrivacyRequest, getMyPrivacyRequests } from '@/l
 import { useNavigate } from 'react-router-dom'
 import AuthGuard from '@/components/AuthGuard'
 import { useCurrentUser, useInvalidateCurrentUser } from '@/hooks/useCurrentUser'
+import { getTodayDateString } from '@/lib/date'
 
 type Req = { id: string; type: 'deletion' | 'export'; status: string; created_at: string; completed_at?: string | null }
 
@@ -19,6 +20,7 @@ function ProfileContent() {
   const invalidateUser = useInvalidateCurrentUser()
   const [initialDataLoaded, setInitialDataLoaded] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const today = getTodayDateString()
 
   // Privacy tab state
   const [privacyItems, setPrivacyItems] = useState<Req[]>([])
@@ -367,11 +369,11 @@ function ProfileContent() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Available From</label>
-                      <input className="w-full" type="date" {...register('available_from')} />
+                      <input className="w-full" type="date" min={today} {...register('available_from')} />
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Available To</label>
-                      <input className="w-full" type="date" {...register('available_to')} />
+                      <input className="w-full" type="date" min={watch('available_from') || today} {...register('available_to')} />
                     </div>
                   </div>
                 )}

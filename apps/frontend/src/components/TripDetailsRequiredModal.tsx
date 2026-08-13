@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { getTodayDateString } from '@/lib/date'
 
 interface TripDetailsRequiredModalProps {
     isOpen: boolean
@@ -17,6 +18,7 @@ export default function TripDetailsRequiredModal({
     const [travelDateTo, setTravelDateTo] = useState('')
     const [guests, setGuests] = useState<number | undefined>(undefined)
     const [error, setError] = useState<string | null>(null)
+    const today = getTodayDateString()
 
     if (!isOpen) return null
 
@@ -24,6 +26,10 @@ export default function TripDetailsRequiredModal({
         e.preventDefault()
         if (!travelDateFrom || !travelDateTo) {
             setError('Please select check-in and check-out dates')
+            return
+        }
+        if (travelDateFrom < today) {
+            setError('Check-in can\'t be in the past')
             return
         }
         if (travelDateTo < travelDateFrom) {
@@ -66,6 +72,7 @@ export default function TripDetailsRequiredModal({
                                     type="date"
                                     className="w-full border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-2.5 px-3 text-base"
                                     value={travelDateFrom}
+                                    min={today}
                                     onChange={(e) => { setTravelDateFrom(e.target.value); setError(null) }}
                                     autoFocus
                                 />
@@ -76,7 +83,7 @@ export default function TripDetailsRequiredModal({
                                     type="date"
                                     className="w-full border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-2.5 px-3 text-base"
                                     value={travelDateTo}
-                                    min={travelDateFrom || undefined}
+                                    min={travelDateFrom || today}
                                     onChange={(e) => { setTravelDateTo(e.target.value); setError(null) }}
                                 />
                             </div>

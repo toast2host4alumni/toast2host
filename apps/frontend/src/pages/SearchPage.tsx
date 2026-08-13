@@ -8,9 +8,11 @@ import UniversityCombobox from '@/components/UniversityCombobox'
 import UniversityMultiSelect from '@/components/UniversityMultiSelect'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { getTodayDateString } from '@/lib/date'
 
 function SearchContent() {
   const { data: user } = useCurrentUser()
+  const today = getTodayDateString()
   const [searchMode, setSearchMode] = useState<'all' | 'same_university' | 'same_batch'>('all')
   const [locationValue, setLocationValue] = useState<LocationValue>({
     location_text: '',
@@ -120,6 +122,7 @@ function SearchContent() {
                         type="date"
                         className="w-full"
                         value={travelDateFrom}
+                        min={today}
                         onChange={(e) => setTravelDateFrom(e.target.value)}
                       />
                     </div>
@@ -129,7 +132,7 @@ function SearchContent() {
                         type="date"
                         className="w-full"
                         value={travelDateTo}
-                        min={travelDateFrom || undefined}
+                        min={travelDateFrom || today}
                         onChange={(e) => setTravelDateTo(e.target.value)}
                       />
                     </div>

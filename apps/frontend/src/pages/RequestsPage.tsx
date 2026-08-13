@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   approveConnection, getMyPendingConnections, getMyOutgoingPendingConnections, rejectConnection,
-  getMyHostedBookings, getMyTrips,
+  getMyHostedBookings, getMyTrips, cancelConnection,
   type PendingConnection, type OutgoingPendingConnection, type ConfirmedBooking,
 } from '@/lib/graphql/operations'
 import AuthGuard from '@/components/AuthGuard'
@@ -234,7 +235,7 @@ function PendingRequestsList({ items, processingId, celebratingIds, onApprove, o
   )
 }
 
-function OutgoingRequestsList({ items, formatDate }: { items: OutgoingPendingConnection[]; formatDate: (d: string) => string }) {
+function OutgoingRequestsList({ items, formatDate, onCancel }: { items: OutgoingPendingConnection[]; formatDate: (d: string) => string; onCancel: (item: OutgoingPendingConnection) => void }) {
   if (items.length === 0) {
     return (
       <EmptyState
@@ -297,6 +298,13 @@ function OutgoingRequestsList({ items, formatDate }: { items: OutgoingPendingCon
                 </svg>
                 Pending
               </span>
+              <button
+                type="button"
+                onClick={() => onCancel(it)}
+                className="text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors mt-2 underline"
+              >
+                Cancel Request
+              </button>
             </div>
           </div>
         ))}
@@ -346,13 +354,20 @@ function OutgoingRequestsList({ items, formatDate }: { items: OutgoingPendingCon
                   </a>
                 )}
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex flex-col items-end gap-2">
                 <span className="inline-flex items-center justify-center py-2 px-4 rounded-lg bg-yellow-50 text-yellow-700 text-sm font-medium">
                   <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                   </svg>
                   Pending
                 </span>
+                <button
+                  type="button"
+                  onClick={() => onCancel(it)}
+                  className="text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors underline"
+                >
+                  Cancel Request
+                </button>
               </div>
             </div>
           </div>
@@ -362,11 +377,12 @@ function OutgoingRequestsList({ items, formatDate }: { items: OutgoingPendingCon
   )
 }
 
-function ConfirmedBookingsList({ items, emptyTitle, emptySubtitle, formatDate }: {
+function ConfirmedBookingsList({ items, emptyTitle, emptySubtitle, formatDate, onCancel }: {
   items: ConfirmedBooking[]
   emptyTitle: string
   emptySubtitle: string
   formatDate: (d: string) => string
+  onCancel: (item: ConfirmedBooking) => void
 }) {
   if (items.length === 0) {
     return (
@@ -433,6 +449,13 @@ function ConfirmedBookingsList({ items, emptyTitle, emptySubtitle, formatDate }:
                 </svg>
                 Confirmed
               </span>
+              <button
+                type="button"
+                onClick={() => onCancel(it)}
+                className="text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors mt-2 underline"
+              >
+                Cancel Booking
+              </button>
             </div>
           </div>
         ))}
@@ -483,13 +506,20 @@ function ConfirmedBookingsList({ items, emptyTitle, emptySubtitle, formatDate }:
                   </a>
                 )}
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex flex-col items-end gap-2">
                 <span className="inline-flex items-center justify-center py-2 px-4 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
                   <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                   Confirmed
                 </span>
+                <button
+                  type="button"
+                  onClick={() => onCancel(it)}
+                  className="text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors underline"
+                >
+                  Cancel Booking
+                </button>
               </div>
             </div>
           </div>
@@ -501,6 +531,7 @@ function ConfirmedBookingsList({ items, emptyTitle, emptySubtitle, formatDate }:
 
 function RequestsContent() {
   const location = useLocation()
+  const queryClient = useQueryClient()
   const [activeGroup, setActiveGroup] = useState<'hosting' | 'traveling'>('hosting')
   const [hostingTab, setHostingTab] = useState<'requests' | 'guests'>('requests')
   const [travelTab, setTravelTab] = useState<'requests' | 'trips'>('requests')
@@ -515,6 +546,8 @@ function RequestsContent() {
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<{ type: 'approve' | 'reject'; item: PendingConnection } | null>(null)
   const [celebratingIds, setCelebratingIds] = useState<Set<string>>(new Set())
+  const [cancelTarget, setCancelTarget] = useState<{ id: string; name: string; wasConfirmed: boolean; onConfirmed: () => void } | null>(null)
+  const [cancelling, setCancelling] = useState(false)
 
   async function loadPending() {
     try {
@@ -588,13 +621,26 @@ function RequestsContent() {
   const handleApproveDirectly = async (item: PendingConnection) => {
     setProcessingId(item.id)
     try {
-      await approveConnection(item.id)
+      const result = await approveConnection(item.id)
       // Show celebration animation
       setCelebratingIds(prev => new Set(prev).add(item.id))
       toast.success(`Approved booking for ${item.requester.name}`)
 
-      // Remove from pending immediately
-      setPendingItems(prev => prev.filter(p => p.id !== item.id))
+      // Remove the approved item, plus any other pending requests the backend just
+      // auto-rejected for overlapping the same dates (their guests were emailed).
+      const autoRejectedIds = new Set(result.autoRejectedIds || [])
+      setPendingItems(prev => prev.filter(p => p.id !== item.id && !autoRejectedIds.has(p.id)))
+      if (autoRejectedIds.size > 0) {
+        // Otherwise the host has no way to know why another pending card just vanished.
+        toast.info(
+          autoRejectedIds.size === 1
+            ? '1 other request for these dates was automatically declined'
+            : `${autoRejectedIds.size} other requests for these dates were automatically declined`
+        )
+      }
+      // Header's badge count is a separate poll-based query - nudge it now
+      // instead of leaving it stale until the next 30s refetch.
+      queryClient.invalidateQueries({ queryKey: ['pendingConnectionsCount'] })
 
       // Skip any reloads for the next 5 seconds to preserve optimistic update
       skipReloadUntilRef.current = Date.now() + 5000
@@ -648,10 +694,61 @@ function RequestsContent() {
       await rejectConnection(item.id)
       toast.success(`Rejected request from ${item.requester.name}`)
       load()
+      queryClient.invalidateQueries({ queryKey: ['pendingConnectionsCount'] })
     } catch {
       toast.error('Failed to reject booking')
     } finally {
       setProcessingId(null)
+    }
+  }
+
+  const requestCancelOutgoing = (item: OutgoingPendingConnection) => {
+    setCancelTarget({
+      id: item.id,
+      name: item.targetUser.name,
+      wasConfirmed: false,
+      onConfirmed: async () => {
+        await cancelConnection(item.id)
+        setOutgoingItems((prev) => prev.filter((p) => p.id !== item.id))
+      },
+    })
+  }
+
+  const requestCancelHostedBooking = (item: ConfirmedBooking) => {
+    setCancelTarget({
+      id: item.id,
+      name: item.otherUser.name,
+      wasConfirmed: true,
+      onConfirmed: async () => {
+        await cancelConnection(item.id)
+        setHostedBookings((prev) => prev.filter((p) => p.id !== item.id))
+      },
+    })
+  }
+
+  const requestCancelTrip = (item: ConfirmedBooking) => {
+    setCancelTarget({
+      id: item.id,
+      name: item.otherUser.name,
+      wasConfirmed: true,
+      onConfirmed: async () => {
+        await cancelConnection(item.id)
+        setTrips((prev) => prev.filter((p) => p.id !== item.id))
+      },
+    })
+  }
+
+  const performCancel = async () => {
+    if (!cancelTarget) return
+    setCancelling(true)
+    try {
+      await cancelTarget.onConfirmed()
+      toast.success(cancelTarget.wasConfirmed ? `Cancelled your booking with ${cancelTarget.name}` : `Cancelled your request to ${cancelTarget.name}`)
+      setCancelTarget(null)
+    } catch {
+      toast.error(cancelTarget.wasConfirmed ? 'Failed to cancel booking' : 'Failed to cancel request')
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -719,6 +816,38 @@ function RequestsContent() {
                   }`}
               >
                 {confirmAction.type === 'approve' ? 'Approve' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Dialog */}
+      {cancelTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-4 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              {cancelTarget.wasConfirmed ? 'Cancel Booking' : 'Cancel Request'}
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {cancelTarget.wasConfirmed
+                ? `Cancel your confirmed booking with ${cancelTarget.name}? They'll be notified by email.`
+                : `Withdraw your booking request to ${cancelTarget.name}?`}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setCancelTarget(null)}
+                disabled={cancelling}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors disabled:opacity-50"
+              >
+                Never mind
+              </button>
+              <button
+                onClick={performCancel}
+                disabled={cancelling}
+                className="px-6 py-2 rounded-lg font-bold bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {cancelling ? 'Cancelling...' : cancelTarget.wasConfirmed ? 'Cancel Booking' : 'Withdraw Request'}
               </button>
             </div>
           </div>
@@ -825,15 +954,17 @@ function RequestsContent() {
             emptyTitle="No upcoming guests"
             emptySubtitle="Guests you've approved to stay with you will appear here"
             formatDate={formatDate}
+            onCancel={requestCancelHostedBooking}
           />
         ) : activeGroup === 'traveling' && travelTab === 'requests' ? (
-          <OutgoingRequestsList items={outgoingItems} formatDate={formatDate} />
+          <OutgoingRequestsList items={outgoingItems} formatDate={formatDate} onCancel={requestCancelOutgoing} />
         ) : (
           <ConfirmedBookingsList
             items={trips}
             emptyTitle="No upcoming trips"
             emptySubtitle="Bookings you've made that get approved will appear here"
             formatDate={formatDate}
+            onCancel={requestCancelTrip}
           />
         )}
       </div>

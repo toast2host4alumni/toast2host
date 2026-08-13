@@ -1,4 +1,4 @@
-import { sendConnectionRequestEmail, sendConnectionApprovedEmail } from '../../../utils/email-service'
+import { sendConnectionRequestEmail, sendConnectionApprovedEmail, sendConnectionUnavailableEmail, sendBookingCancelledEmail } from '../../../utils/email-service'
 
 type GQLCtx = { state: { user?: { id: number } }; koaContext?: { request?: { header?: { origin?: string } } } }
 
@@ -500,7 +500,78 @@ const connectionResolvers = {
         // Don't fail the connection approval if email fails
       }
 
-      return { id: String(updated.id), status: updated.status }
+      // Other guests may have pending requests for the same overlapping dates - the host
+      // can only serve one, so auto-close the rest and let those guests know rather than
+      // leaving them stuck on a request that can now never be approved (HOST_DOUBLE_BOOKED
+      // would block it forever otherwise). Collected so the caller can drop them from its
+      // own pending list immediately instead of waiting on a future reload.
+      const autoRejectedIds: string[] = []
+      if (conn.travel_date_from && conn.travel_date_to) {
+        try {
+          const competing = await strapi.entityService.findMany('api::connection.connection', {
+            filters: {
+              target_user: user.id,
+              status: 'pending',
+              id: { $ne: connId },
+              travel_date_from: { $lte: conn.travel_date_to },
+              travel_date_to: { $gte: conn.travel_date_from },
+            },
+            populate: { actor_user: true },
+            page: 1,
+            pageSize: 100,
+          })
+
+          for (const losing of competing) {
+            autoRejectedIds.push(String(losing.id))
+            await strapi.entityService.update('api::connection.connection', losing.id, { data: { status: 'rejected' } })
+            await strapi.entityService.create('api::connection-event.connection-event', {
+              data: {
+                connection: losing.id,
+                actor_user: (losing as any).actor_user?.id,
+                target_user: user.id,
+                type: 'rejected',
+                context: 'auto_rejected_overlapping_booking',
+              },
+            })
+
+            try {
+              const losingGuestId = (losing as any).actor_user?.id
+              const guestProfile = await strapi.entityService.findMany('api::user-profile.user-profile', {
+                filters: { user: losingGuestId },
+                populate: { user: { fields: ['id', 'email'] } },
+                limit: 1,
+              })
+              const hostProfile = await strapi.entityService.findMany('api::user-profile.user-profile', {
+                filters: { user: user.id },
+                limit: 1,
+              })
+
+              if (guestProfile[0]?.user?.email) {
+                const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
+                const frontendUrl = resolveFrontendUrl(ctx)
+                const logoUrl = `${serverUrl}/t2h_logo.png`
+
+                await sendConnectionUnavailableEmail({
+                  guestEmail: guestProfile[0].user.email,
+                  guestFirstName: guestProfile[0].first_name || 'there',
+                  hostFullName: hostProfile[0] ? [hostProfile[0].first_name, hostProfile[0].last_name].filter(Boolean).join(' ') || 'Alumni' : 'Alumni',
+                  travelDateFrom: (losing as any).travel_date_from || undefined,
+                  travelDateTo: (losing as any).travel_date_to || undefined,
+                  searchUrl: `${frontendUrl}/search`,
+                  logoUrl,
+                })
+              }
+            } catch (emailError) {
+              console.error('Failed to send booking unavailable email:', emailError)
+            }
+          }
+        } catch (cleanupError) {
+          console.error('Failed to auto-reject competing requests:', cleanupError)
+          // Don't fail the approval itself if this cleanup step has a problem
+        }
+      }
+
+      return { id: String(updated.id), status: updated.status, autoRejectedIds }
     },
     denyConnection: async (_parent: unknown, args: { id: string }, ctx: GQLCtx) => {
       const user = ctx.state.user
@@ -512,6 +583,81 @@ const connectionResolvers = {
       await strapi.entityService.create('api::connection-event.connection-event', {
         data: { connection: connId, actor_user: conn.actor_user?.id, target_user: user.id, type: 'rejected' },
       })
+      return { id: String(updated.id), status: updated.status }
+    },
+    // A guest can withdraw their own pending request, or either side of an already
+    // confirmed booking can call it off - unlike approve/reject, cancellation isn't a
+    // one-sided host decision, so who's allowed depends on the connection's current status.
+    cancelConnection: async (_parent: unknown, args: { id: string }, ctx: GQLCtx) => {
+      const user = ctx.state.user
+      if (!user) throw new Error('Unauthorized')
+      const connId = Number(args.id)
+      const conn = await strapi.entityService.findOne('api::connection.connection', connId, { populate: { actor_user: true, target_user: true } })
+      if (!conn) throw new Error('Invalid connection')
+
+      const actorId = conn.actor_user?.id
+      const targetId = conn.target_user?.id
+      const isActor = actorId === user.id
+      const isTarget = targetId === user.id
+      if (!isActor && !isTarget) throw new Error('Invalid connection')
+
+      if (conn.status === 'pending') {
+        // Only the requester can withdraw a request that hasn't been decided yet
+        if (!isActor) throw new Error('Invalid connection')
+      } else if (conn.status !== 'connected') {
+        // Already rejected/cancelled - nothing to cancel
+        throw new Error('Invalid connection')
+      }
+
+      const wasConnected = conn.status === 'connected'
+      const updated = await strapi.entityService.update('api::connection.connection', connId, { data: { status: 'cancelled' } })
+      await strapi.entityService.create('api::connection-event.connection-event', {
+        data: {
+          connection: connId,
+          actor_user: actorId,
+          target_user: targetId,
+          type: 'cancelled',
+          context: isActor ? 'cancelled_by_guest' : 'cancelled_by_host',
+        },
+      })
+
+      // Only a confirmed booking's cancellation is time-sensitive enough to email about -
+      // withdrawing a still-pending request just needs to disappear from the host's list.
+      if (wasConnected) {
+        try {
+          const otherPartyId = isActor ? targetId : actorId
+          const cancellerId = user.id
+
+          const otherProfiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
+            filters: { user: otherPartyId },
+            populate: { user: { fields: ['id', 'email'] } },
+            limit: 1,
+          })
+          const cancellerProfiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
+            filters: { user: cancellerId },
+            limit: 1,
+          })
+
+          if (otherProfiles[0]?.user?.email) {
+            const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
+            const frontendUrl = resolveFrontendUrl(ctx)
+            const logoUrl = `${serverUrl}/t2h_logo.png`
+
+            await sendBookingCancelledEmail({
+              recipientEmail: otherProfiles[0].user.email,
+              recipientFirstName: otherProfiles[0].first_name || 'there',
+              cancellerFullName: cancellerProfiles[0] ? [cancellerProfiles[0].first_name, cancellerProfiles[0].last_name].filter(Boolean).join(' ') || 'Alumni' : 'Alumni',
+              travelDateFrom: conn.travel_date_from || undefined,
+              travelDateTo: conn.travel_date_to || undefined,
+              bookingsUrl: `${frontendUrl}/connections`,
+              logoUrl,
+            })
+          }
+        } catch (emailError) {
+          console.error('Failed to send booking cancelled email:', emailError)
+        }
+      }
+
       return { id: String(updated.id), status: updated.status }
     },
   },

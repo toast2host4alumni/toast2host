@@ -291,6 +291,53 @@ a {
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
 }
 
+/* Toast notifications (sonner) - same palette as the alert-* states above,
+   tuned for a floating toast (bigger shadow, !important to win over sonner's
+   own inline styles). */
+.toast-base {
+  padding: 1rem 1.25rem !important;
+  border-radius: 0.875rem !important;
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+}
+
+/* sonner applies `default` to every toast as a base layer, then the type-specific
+   class (success/error/info) on top of it - so the type classes must come AFTER
+   .toast-default in the cascade to win when both are applied to the same element. */
+.toast-default {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #111827 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+.toast-success {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+  border: 1px solid #6ee7b7 !important;
+  color: #065f46 !important;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25) !important;
+}
+
+.toast-error {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+  border: 1px solid #fca5a5 !important;
+  color: #991b1b !important;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.25) !important;
+}
+
+.toast-info {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  border: 1px solid #fcd34d !important;
+  color: #92400e !important;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25) !important;
+}
+
+.toast-close-button {
+  background: rgba(0, 0, 0, 0.08) !important;
+  border: none !important;
+  color: inherit !important;
+}
+
 /* Badge styles */
 .badge {
   display: inline-flex;

@@ -20,7 +20,7 @@
     },
     "status": {
       "type": "enumeration",
-      "enum": ["pending", "connected", "rejected"],
+      "enum": ["pending", "connected", "rejected", "cancelled"],
       "required": true
     },
     "travel_date_from": {

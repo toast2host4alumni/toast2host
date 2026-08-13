@@ -24,8 +24,7 @@ export default function ConnectLimitNotice({ limit = 10, onDismiss }: ConnectLim
       <div className="flex-1">
         <h3 className="text-sm font-bold text-amber-900 mb-1">Daily connection limit reached</h3>
         <p className="text-sm text-amber-800 leading-relaxed">
-          You've reached your daily limit of {limit} connection{limit !== 1 ? 's' : ''}. Please try again tomorrow, or
-          contact support to upgrade your plan for more connections.
+          You've reached your daily limit of {limit} connection{limit !== 1 ? 's' : ''}. Please try again tomorrow.
         </p>
       </div>
       {onDismiss && (

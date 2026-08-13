@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAuthenticated, removeAuthToken } from '@/lib/auth'
 import { getMyPendingConnections } from '@/lib/graphql/operations'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
@@ -10,7 +10,6 @@ export default function Header() {
   const location = useLocation()
   const queryClient = useQueryClient()
   const [isAuthed, setIsAuthed] = useState(false)
-  const [pendingCount, setPendingCount] = useState(0)
   const { data: currentUser } = useCurrentUser({ enabled: isAuthed })
   const loggedInName = currentUser?.profile
     ? [currentUser.profile.first_name, currentUser.profile.last_name].filter(Boolean).join(' ')
@@ -25,27 +24,15 @@ export default function Header() {
     checkAuth()
   }, [location.pathname])
 
-  useEffect(() => {
-    // Fetch pending connections count when authenticated
-    const fetchPendingCount = async () => {
-      if (!isAuthed) {
-        setPendingCount(0)
-        return
-      }
-      try {
-        const pending = await getMyPendingConnections()
-        setPendingCount(pending.length)
-      } catch {
-        setPendingCount(0)
-      }
-    }
-
-    fetchPendingCount()
-
-    // Poll for new requests every 30 seconds
-    const interval = setInterval(fetchPendingCount, 30000)
-    return () => clearInterval(interval)
-  }, [isAuthed, location.pathname])
+  // Shared query key so RequestsPage can invalidate this the moment a request
+  // is approved/rejected, instead of the badge only catching up on the next
+  // 30s poll or a route change.
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ['pendingConnectionsCount'],
+    queryFn: async () => (await getMyPendingConnections()).length,
+    enabled: isAuthed,
+    refetchInterval: 30000,
+  })
 
   const handleLogout = () => {
     removeAuthToken()

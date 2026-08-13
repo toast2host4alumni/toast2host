@@ -114,10 +114,13 @@ export async function createConnection(targetUserId: string, options?: CreateCon
 }
 
 const APPROVE_CONNECTION = `
-  mutation AcceptConnection($id: ID!) { acceptConnection(id: $id) { id status } }
+  mutation AcceptConnection($id: ID!) { acceptConnection(id: $id) { id status autoRejectedIds } }
 ` as const
 const REJECT_CONNECTION = `
   mutation DenyConnection($id: ID!) { denyConnection(id: $id) { id status } }
+` as const
+const CANCEL_CONNECTION = `
+  mutation CancelConnection($id: ID!) { cancelConnection(id: $id) { id status } }
 ` as const
 
 export async function approveConnection(id: string) {
@@ -130,6 +133,12 @@ export async function rejectConnection(id: string) {
   const res = await graphqlClient.mutation(REJECT_CONNECTION, { id }).toPromise()
   if (res.error) throw res.error
   return res.data!.denyConnection
+}
+
+export async function cancelConnection(id: string) {
+  const res = await graphqlClient.mutation(CANCEL_CONNECTION, { id }).toPromise()
+  if (res.error) throw res.error
+  return res.data!.cancelConnection
 }
 
 const MY_PENDING = `
