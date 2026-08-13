@@ -18,6 +18,7 @@ type Item = {
   profilePhotoUrl?: string | null
   batchYear?: number | null
   proximityMiles?: number | null
+  hostMode?: boolean
 }
 
 export interface SearchResultsProps {
@@ -73,6 +74,20 @@ function ConnectionButton({
           {isConnecting ? 'Sending...' : 'Pending'}
         </span>
       </div>
+    )
+  }
+
+  // A host who has since turned off Host Mode won't accept new requests, whether
+  // this is a first-time "Book" or a "Book Again" on a past connection - the
+  // backend rejects both the same way, so don't offer either.
+  if (item.hostMode === false) {
+    return (
+      <span
+        className="inline-flex items-center justify-center py-2.5 px-6 rounded-lg text-sm font-medium bg-gray-100 text-gray-500 cursor-not-allowed"
+        title="This host is not currently accepting bookings"
+      >
+        Not Hosting
+      </span>
     )
   }
 
@@ -222,6 +237,10 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
 
   // Handle Book button click - trip details (When/Who) are required first
   const handleConnect = (item: Item) => {
+    if (item.hostMode === false) {
+      toast.error('This host is not currently accepting bookings')
+      return
+    }
     if (travelDateFrom && travelDateTo && guests) {
       // Already selected in the search bar - use those
       proceedAfterTripDetails(item, { travelDateFrom, travelDateTo, guests })

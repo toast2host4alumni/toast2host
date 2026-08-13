@@ -26,7 +26,10 @@ function SearchContent() {
   const [guests, setGuests] = useState<number | undefined>(undefined)
   const [sort, setSort] = useState<'proximity' | 'recent' | 'name'>('recent')
   const [connectedOnly, setConnectedOnly] = useState(false)
-  const [hostsOnly, setHostsOnly] = useState(false)
+  // Defaults to true - this is a booking tool, so the primary search experience
+  // should surface people who are actually accepting guests. The toggle lets
+  // guests opt into browsing the full alumni directory instead.
+  const [hostsOnly, setHostsOnly] = useState(true)
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
 
   // Auto-set filters based on search mode
