@@ -44,6 +44,14 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['t2h_logo.png'],
+      workbox: {
+        // Without these, a newly deployed service worker sits "waiting"
+        // until every open tab of the old version is closed, so visitors
+        // keep seeing a stale cached bundle until they hard-refresh.
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       manifest: {
         name: 'Toast2Host - Alumni Connect',
         short_name: 'Toast2Host',

@@ -110,7 +110,7 @@ function OnboardingContent() {
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">Email</label>
               <input
-                className="w-full bg-gray-50 cursor-not-allowed"
+                className="w-full bg-gray-50 cursor-not-allowed text-gray-500"
                 value={user.email}
                 disabled
                 readOnly
@@ -121,36 +121,25 @@ function OnboardingContent() {
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">First Name</label>
               <input
-                className="w-full"
+                className="w-full bg-gray-50 cursor-not-allowed text-gray-500"
                 placeholder="John"
+                readOnly
                 {...register('first_name')}
               />
-              {errors.first_name && (
-                <p className="text-red-600 text-sm font-medium flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {errors.first_name.message}
-                </p>
-              )}
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">Last Name</label>
               <input
-                className="w-full"
+                className="w-full bg-gray-50 cursor-not-allowed text-gray-500"
                 placeholder="Doe"
+                readOnly
                 {...register('last_name')}
               />
-              {errors.last_name && (
-                <p className="text-red-600 text-sm font-medium flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {errors.last_name.message}
-                </p>
-              )}
             </div>
           </div>
+          <p className="text-xs text-gray-500 -mt-2">
+            Your email & name are pulled from your Google account and can't be edited here — this helps other alumni verify who they're connecting with.
+          </p>
 
           <div className="space-y-2">
             <LocationCombobox value={locationValue} onChange={onLocationChange} />

@@ -105,6 +105,9 @@ importers:
       graphql:
         specifier: ^16.12.0
         version: 16.12.0
+      libphonenumber-js:
+        specifier: ^1.13.11
+        version: 1.13.11
       lucide-react:
         specifier: ^0.553.0
         version: 0.553.0(react@19.2.0)
@@ -6841,6 +6844,9 @@ packages:
 
   libmime@2.1.3:
     resolution: {integrity: sha512-ABr2f4O+K99sypmkF/yPz2aXxUFHEZzv+iUkxItCeKZWHHXdQPpDXd6rV1kBBwL4PserzLU09EIzJ2lxC9hPfQ==}
+
+  libphonenumber-js@1.13.11:
+    resolution: {integrity: sha512-ETER2kMaIFTI/Nh1a8Gk03dUF/SL0VZqtI+CcVHZxp5WIHYwNS7S+uiYZDYCvLy3lOR4/DAD5jf0h5WkePPpqg==}
 
   libqp@1.1.0:
     resolution: {integrity: sha512-4Rgfa0hZpG++t1Vi2IiqXG9Ad1ig4QTmtuZF946QJP4bPqOYC78ixUXgz5TW/wE7lNaNKlplSYTxQ+fR2KZ0EA==}
@@ -18522,6 +18528,8 @@ snapshots:
       libbase64: 0.1.0
       libqp: 1.1.0
 
+  libphonenumber-js@1.13.11: {}
+
   libqp@1.1.0: {}
 
   lie@3.3.0:
@@ -21813,7 +21821,7 @@ snapshots:
       fast-json-stable-stringify: 2.1.0
       fs-extra: 9.1.0
       glob: 11.1.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       pretty-bytes: 5.6.0
       rollup: 2.79.2
       source-map: 0.8.0-beta.0

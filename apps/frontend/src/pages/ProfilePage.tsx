@@ -6,6 +6,7 @@ import { profileSchema, type ProfileInput } from '@/lib/validation/profile'
 import UniversityCombobox from '@/components/UniversityCombobox'
 import LocationCombobox, { type LocationValue } from '@/components/LocationCombobox'
 import LinkedInInput from '@/components/LinkedInInput'
+import PhoneNumberInput from '@/components/PhoneNumberInput'
 import { updateMyProfile, createPrivacyRequest, getMyPrivacyRequests } from '@/lib/graphql/operations'
 import { useNavigate } from 'react-router-dom'
 import AuthGuard from '@/components/AuthGuard'
@@ -262,16 +263,6 @@ function ProfileContent() {
               </>
             )}
 
-            {activeTab === 'profile' && watch('profile_photo_url') && (
-              <div className="flex justify-center">
-                <img
-                  src={watch('profile_photo_url')}
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full object-cover border-4 border-primary/20"
-                />
-              </div>
-            )}
-
             {activeTab === 'profile' && (
               <>
             {/* Email (non-editable) */}
@@ -291,36 +282,25 @@ function ProfileContent() {
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700">First Name</label>
                 <input
-                  className="w-full"
+                  className="w-full bg-gray-50 cursor-not-allowed text-gray-500"
                   placeholder="John"
+                  readOnly
                   {...register('first_name')}
                 />
-                {errors.first_name && (
-                  <p className="text-red-600 text-sm font-medium flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {errors.first_name.message}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700">Last Name</label>
                 <input
-                  className="w-full"
+                  className="w-full bg-gray-50 cursor-not-allowed text-gray-500"
                   placeholder="Doe"
+                  readOnly
                   {...register('last_name')}
                 />
-                {errors.last_name && (
-                  <p className="text-red-600 text-sm font-medium flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {errors.last_name.message}
-                  </p>
-                )}
               </div>
             </div>
+            <p className="text-xs text-gray-500 -mt-2">
+              Your email & name are pulled from your Google account and can't be edited here — this helps other alumni verify who they're connecting with.
+            </p>
 
             {/* Location - moved above University */}
             <div className="space-y-2">
@@ -335,39 +315,39 @@ function ProfileContent() {
               )}
             </div>
 
-            {/* University - moved below Location */}
-            <div className="space-y-2">
-              <UniversityCombobox
-                value={watch('university_name')}
-                onChange={onUniversityChange}
-              />
-              {errors.university_name && (
-                <p className="text-red-600 text-sm font-medium flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {errors.university_name.message}
-                </p>
-              )}
-            </div>
-
-            {/* Batch Year - moved above LinkedIn */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Batch Year</label>
-              <input
-                className="w-full"
-                type="number"
-                placeholder="YYYY"
-                {...register('batch_year', { valueAsNumber: true })}
-              />
-              {errors.batch_year && (
-                <p className="text-red-600 text-sm font-medium flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {errors.batch_year.message}
-                </p>
-              )}
+            {/* University + Batch Year - same row to save vertical space */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <UniversityCombobox
+                  value={watch('university_name')}
+                  onChange={onUniversityChange}
+                />
+                {errors.university_name && (
+                  <p className="text-red-600 text-sm font-medium flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.university_name.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Batch Year</label>
+                <input
+                  className="w-full"
+                  type="number"
+                  placeholder="YYYY"
+                  {...register('batch_year', { valueAsNumber: true })}
+                />
+                {errors.batch_year && (
+                  <p className="text-red-600 text-sm font-medium flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.batch_year.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* LinkedIn - moved below Batch Year */}
@@ -380,17 +360,12 @@ function ProfileContent() {
               <p className="text-sm text-green-600 font-semibold">✨ Adds Credibility!!!</p>
             </div>
 
-            {/* Phone Number - new field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Phone Number (optional)</label>
-              <input
-                className="w-full"
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                {...register('phone_number')}
-              />
-              <p className="text-xs text-gray-500">...for faster connectivity</p>
-            </div>
+            {/* Phone Number */}
+            <PhoneNumberInput
+              value={watch('phone_number')}
+              onChange={(v) => setValue('phone_number', v, { shouldValidate: true })}
+              error={errors.phone_number?.message}
+            />
               </>
             )}
 

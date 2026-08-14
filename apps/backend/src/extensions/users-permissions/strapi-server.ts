@@ -1,5 +1,8 @@
 export default (plugin: any) => {
-  // Override the OAuth callback to save Google profile photo
+  // Override the OAuth callback to save Google profile photo + name.
+  // Name fields are re-synced from Google on every login so the app's
+  // identity stays tied to the authenticated Google account (supports
+  // LinkedIn-verification trust) rather than free-typed profile text.
   const originalCallback = plugin.controllers.auth.callback
 
   plugin.controllers.auth.callback = async (ctx: any) => {
@@ -26,10 +29,21 @@ export default (plugin: any) => {
               },
             })
 
-            const googleUser = await googleResponse.json() as { picture?: string }
+            const googleUser = await googleResponse.json() as {
+              picture?: string
+              given_name?: string
+              family_name?: string
+            }
             const pictureUrl = googleUser.picture
+            const firstName = googleUser.given_name
+            const lastName = googleUser.family_name
 
-            if (pictureUrl) {
+            if (pictureUrl || firstName || lastName) {
+              const data: Record<string, string> = {}
+              if (pictureUrl) data.profile_photo_url = pictureUrl
+              if (firstName) data.first_name = firstName
+              if (lastName) data.last_name = lastName
+
               // Check if user already has a profile
               const existingProfile = await strapi.entityService.findMany('api::user-profile.user-profile', {
                 filters: { user: userId },
@@ -37,30 +51,26 @@ export default (plugin: any) => {
               })
 
               if (existingProfile && existingProfile.length > 0) {
-                // Update existing profile with photo URL
                 await strapi.entityService.update('api::user-profile.user-profile', existingProfile[0].id, {
-                  data: {
-                    profile_photo_url: pictureUrl,
-                  },
+                  data,
                 })
               } else {
-                // Create new profile with photo URL
                 await strapi.entityService.create('api::user-profile.user-profile', {
                   data: {
                     user: userId,
-                    profile_photo_url: pictureUrl,
+                    ...data,
                   },
                 })
               }
 
-              console.log(`Google profile photo saved for user ${userId}`)
+              console.log(`Google profile data synced for user ${userId}`)
             }
           }
         }
       }
     } catch (error) {
-      console.error('Error saving Google profile photo:', error)
-      // Don't fail the OAuth flow if photo download fails
+      console.error('Error syncing Google profile data:', error)
+      // Don't fail the OAuth flow if the sync fails
     }
 
     return response

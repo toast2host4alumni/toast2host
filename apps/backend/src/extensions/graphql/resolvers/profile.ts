@@ -32,7 +32,11 @@ const profileResolvers = {
         filters: { user: user.id },
         limit: 1,
       })
-      const data = { ...args.input, user: user.id }
+      // Names are set from the authenticated Google account on login (see
+      // extensions/users-permissions/strapi-server.ts), not user input, so
+      // they stay a reliable identity signal for LinkedIn verification.
+      const { first_name: _firstName, last_name: _lastName, ...rest } = args.input
+      const data = { ...rest, user: user.id }
       let profile
       if (Array.isArray(existing) && existing[0]) {
         profile = await strapi.entityService.update('api::user-profile.user-profile', existing[0].id, { data })

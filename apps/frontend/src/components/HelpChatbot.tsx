@@ -55,8 +55,16 @@ const QA_BY_TOPIC: Record<Topic, QA[]> = {
       a: 'In Profile, toggle "I\'m always available", or set specific Available From/To dates. Guests searching outside that window won\'t see you as an available host.',
     },
     {
+      q: 'Can I change my name or email?',
+      a: "No - your name and email are pulled directly from your Google account and can't be edited in the app. This keeps your identity tied to a real, verified account, which helps other alumni trust who they're connecting with.",
+    },
+    {
       q: 'Why do I need to add my LinkedIn?',
       a: "It's required before you can send a booking request - it gives the host a way to verify who you are before agreeing to host you.",
+    },
+    {
+      q: 'Can I add a phone number?',
+      a: "Yes, it's optional. Pick your country from the dropdown and enter your number - we validate it and save it with the country code included, so it's ready to use for faster connectivity.",
     },
     {
       q: 'How do I delete my data or account?',

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 
 export const profileSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
@@ -31,7 +32,12 @@ export const profileSchema = z.object({
   // (an `undefined` value gets dropped entirely from the GraphQL request body,
   // which would leave a previously-set limit untouched instead of clearing it).
   max_guests: z.number().int().min(1, 'Must be at least 1').max(50, 'Max guests cannot exceed 50').optional().nullable(),
-  phone_number: z.string().optional(),
+  phone_number: z
+    .string()
+    .optional()
+    .refine((val) => !val || isValidPhoneNumber(val), {
+      message: 'Please enter a valid phone number',
+    }),
   profile_visibility: z.enum(['everyone', 'same_university', 'same_batch']).optional(),
 })
 
