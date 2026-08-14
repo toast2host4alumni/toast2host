@@ -28,9 +28,6 @@ const typeDefs = /* GraphQL */ `
     onboarding_completed: Boolean
     host_mode: Boolean
     max_guests: Int
-    available_from: String
-    available_to: String
-    always_available: Boolean
     phone_number: String
     profile_visibility: String
   }
@@ -50,9 +47,6 @@ const typeDefs = /* GraphQL */ `
     onboarding_completed: Boolean
     host_mode: Boolean
     max_guests: Int
-    available_from: String
-    available_to: String
-    always_available: Boolean
     phone_number: String
     profile_visibility: String
     updated_at: String
@@ -77,9 +71,6 @@ const typeDefs = /* GraphQL */ `
     onboarding_completed: Boolean
     host_mode: Boolean
     max_guests: Int
-    available_from: String
-    available_to: String
-    always_available: Boolean
     phone_number: String
     profile_visibility: String
     updated_at: String
@@ -177,6 +168,7 @@ const typeDefs = /* GraphQL */ `
     batchYear: Int
     proximityMiles: Float
     hostMode: Boolean
+    maxGuests: Int
   }
 
   extend type Query {
@@ -201,8 +193,6 @@ const typeDefs = /* GraphQL */ `
       page: Int
       pageSize: Int
       hosts_only: Boolean
-      travel_date_from: String
-      travel_date_to: String
       guests: Int
     ): [SearchUserResult!]!
   }

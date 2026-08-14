@@ -12,10 +12,7 @@ type UpdateProfileInput = {
   batch_year?: number
   onboarding_completed?: boolean
   host_mode?: boolean
-  max_guests?: number
-  available_from?: string | null
-  available_to?: string | null
-  always_available?: boolean
+  max_guests?: number | null
   phone_number?: string
   profile_visibility?: 'everyone' | 'same_university' | 'same_batch'
 }

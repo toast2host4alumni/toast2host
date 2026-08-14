@@ -11,8 +11,6 @@ export const searchParamsSchema = z.object({
   sort: z.enum(['proximity', 'recent', 'name']).optional(),
   connected_only: z.boolean().optional(),
   hosts_only: z.boolean().optional(),
-  travel_date_from: z.string().optional(),
-  travel_date_to: z.string().optional(),
   guests: z.number().int().min(1).optional(),
   name: z.string().optional(),
   page: z.number().int().min(1).optional(),

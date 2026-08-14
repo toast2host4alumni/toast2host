@@ -15,10 +15,13 @@ export default function SignInPage() {
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-md w-full space-y-8 fade-in">
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl mb-2">
-            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
+          <img
+            src="/TOAST_MAN_LOGO.jpeg"
+            alt="Toast Man"
+            className="w-32 h-32 rounded-full object-cover mx-auto shadow-md ring-4 ring-primary/20"
+          />
+          <div className="inline-block bg-gray-50 border border-gray-200 rounded-2xl rounded-bl-sm px-5 py-3">
+            <p className="text-gray-900 font-extrabold text-xl">Hi, I'm Toast Man! 👋</p>
           </div>
           <h1 className="text-4xl font-black text-gray-900">
             Welcome to Toast<span className="text-primary">2</span>Host

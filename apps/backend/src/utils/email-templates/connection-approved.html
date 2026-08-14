@@ -16,43 +16,44 @@
       max-width: 600px;
       margin: 0 auto;
       background-color: #ffffff;
-      border: 2px solid #000000;
+      border: 2px solid #e5e7eb;
       border-radius: 12px;
       overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
     .header {
       background-color: #ffc510;
-      padding: 32px 24px;
+      padding: 18px 24px;
       text-align: center;
     }
     .logo {
-      max-width: 180px;
+      max-width: 130px;
       height: auto;
     }
     .content {
-      padding: 40px 32px;
+      padding: 20px 24px;
     }
     .greeting {
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 600;
       color: #111827;
-      margin-bottom: 24px;
+      margin-bottom: 8px;
     }
     .message {
-      font-size: 16px;
-      line-height: 1.6;
+      font-size: 13px;
+      line-height: 1.5;
       color: #374151;
-      margin-bottom: 16px;
+      margin-bottom: 6px;
     }
     .highlight-box {
       background-color: #f0fdf4;
       border-left: 4px solid #10b981;
       border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
+      padding: 10px 14px;
+      margin: 8px 0;
     }
     .highlight-text {
-      font-size: 17px;
+      font-size: 14px;
       font-weight: 600;
       color: #059669;
       margin: 0;
@@ -60,31 +61,31 @@
     .profile-card {
       background: transparent;
       border-radius: 0;
-      padding: 24px 0;
-      margin: 32px 0;
+      padding: 2px 0;
+      margin: 8px 0;
       border: none;
     }
     .profile-info {
-      margin-bottom: 12px;
+      margin-bottom: 5px;
     }
     .profile-label {
-      font-size: 13px;
+      font-size: 10px;
       font-weight: 600;
       color: #6b7280;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .profile-value {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 600;
       color: #111827;
     }
     .contact-info {
       background-color: #f9fafb;
       border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
+      padding: 10px 14px;
+      margin: 8px 0;
     }
     .email-link {
       color: #0077b5;
@@ -93,17 +94,17 @@
     }
     .button-container {
       text-align: center;
-      margin: 32px 0;
+      margin: 12px 0;
     }
     .button {
       display: inline-block;
       background-color: #ffc510;
       color: #000000 !important;
       text-decoration: none;
-      padding: 14px 32px;
+      padding: 9px 24px;
       border-radius: 8px;
       font-weight: 700;
-      font-size: 16px;
+      font-size: 13px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       border: none;
       transition: all 0.3s ease;
@@ -114,11 +115,24 @@
     }
     .footer {
       background-color: #000000;
-      padding: 24px 32px;
+      padding: 14px 20px;
       text-align: center;
-      font-size: 14px;
+      font-size: 11px;
       color: #ffffff;
-      border-top: 2px solid #000000;
+    }
+    .footer-brand {
+      font-weight: 700;
+      margin: 0 0 3px 0;
+    }
+    .footer-tagline {
+      color: #9ca3af;
+      font-size: 10px;
+      margin: 0 0 8px 0;
+    }
+    .footer-note {
+      color: #9ca3af;
+      font-size: 10px;
+      margin: 0 0 3px 0;
     }
     .footer a {
       color: #ffc510;
@@ -128,7 +142,7 @@
     .divider {
       height: 1px;
       background-color: #e5e7eb;
-      margin: 24px 0;
+      margin: 8px 0;
     }
   </style>
 </head>
@@ -187,7 +201,7 @@
       <!-- Contact Information -->
       <div class="contact-info">
         <div class="profile-label">Contact Email</div>
-        <div style="margin-top: 8px;">
+        <div style="margin-top: 4px;">
           <a href="mailto:{{HOST_EMAIL}}" class="email-link">{{HOST_EMAIL}}</a>
         </div>
       </div>
@@ -198,19 +212,27 @@
 
       <!-- CTA Button -->
       <div class="button-container">
-        <a href="{{CONNECTIONS_URL}}" class="button" style="display: inline-block; background-color: #ffc510; color: #000000; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); border: none;">
+        <a href="{{CONNECTIONS_URL}}" class="button" style="display: inline-block; background-color: #ffc510; color: #000000; text-decoration: none; padding: 9px 24px; border-radius: 8px; font-weight: 700; font-size: 13px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); border: none;">
           <span style="color: #000000; text-decoration: none;">View My Bookings</span>
         </a>
+        <p style="font-size: 10px; color: #9ca3af; margin: 6px 0 0 0; word-break: break-all;">
+          Or paste this link into your browser: {{CONNECTIONS_URL}}
+        </p>
       </div>
     </div>
 
     <!-- Footer -->
     <div class="footer">
-      <p style="margin: 0 0 8px 0;">
-        This email was sent by <a href="https://toast2host.net">Toast2Host</a>
+      <p class="footer-brand">Toast2Host</p>
+      <p class="footer-tagline">Bed and Breakfast for Alumni</p>
+      <p class="footer-note">
+        You're receiving this because of your booking activity on <a href="https://app.toast2host.net">Toast2Host</a>.
       </p>
-      <p style="margin: 0; font-size: 13px;">
-        Alumni Connect Platform • Building Meaningful Connections
+      <p class="footer-note">
+        Questions? Contact us at <a href="mailto:toast2host4alumni@gmail.com">toast2host4alumni@gmail.com</a>
+      </p>
+      <p class="footer-note" style="margin: 0;">
+        🔒 We'll never ask for your password or payment details by email.
       </p>
     </div>
   </div>

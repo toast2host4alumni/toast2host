@@ -69,7 +69,7 @@ type Message =
   | { role: 'bot'; text: string }
   | { role: 'user'; text: string }
 
-const GREETING = "Hi! I can explain how Search, Bookings, and Profile work here. What do you want to know?"
+const GREETING = "Hi, I'm Toast Man! 🥪📬 I connect alumni with alumni, one delivery at a time - think of me as your postman around here. I can explain how Search, Bookings, and Profile work. What do you want to know?"
 
 export default function HelpChatbot() {
   const location = useLocation()
@@ -109,8 +109,11 @@ export default function HelpChatbot() {
           {/* Header */}
           <div className="bg-black px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🤖</span>
-              <span className="text-primary font-bold text-sm">Toast2Host Help</span>
+              <img src="/TOAST_MAN_LOGO.jpeg" alt="Toast Man" className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-2 ring-primary/40" />
+              <div className="leading-tight">
+                <p className="text-primary font-bold text-sm">Toast Man</p>
+                <p className="text-white/50 text-[11px]">Your Toast2Host guide</p>
+              </div>
             </div>
             <button
               type="button"
@@ -191,17 +194,15 @@ export default function HelpChatbot() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="h-14 rounded-full bg-black shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-2 pl-4 pr-5 ring-4 ring-white"
+        className="h-14 rounded-full bg-black shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-2 pl-2 pr-5 ring-4 ring-white"
         title="Help"
       >
         {open ? (
-          <svg className="w-6 h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-primary flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         ) : (
-          <svg className="w-6 h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8-1.294 0-2.523-.245-3.632-.687L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
+          <img src="/TOAST_MAN_LOGO.jpeg" alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-primary/60" />
         )}
         <span className="text-primary font-bold text-sm whitespace-nowrap">{open ? 'Close' : 'Help'}</span>
       </button>

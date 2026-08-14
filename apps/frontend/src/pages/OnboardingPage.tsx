@@ -51,8 +51,8 @@ function OnboardingContent() {
   const loc = watch(['location_text', 'location_lat', 'location_lng', 'location_scope'])
   const locationValue: LocationValue = {
     location_text: loc[0] || '',
-    location_lat: loc[1],
-    location_lng: loc[2],
+    location_lat: loc[1] ?? undefined,
+    location_lng: loc[2] ?? undefined,
     location_scope: loc[3],
   }
   const onLocationChange = (v: LocationValue) => {

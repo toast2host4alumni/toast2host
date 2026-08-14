@@ -19,6 +19,14 @@ function resolveFrontendUrl(ctx: GQLCtx): string {
   return process.env.FRONTEND_URL || 'https://app.toast2host.net'
 }
 
+// Fixed to the production frontend regardless of environment - unlike
+// resolveFrontendUrl() this is for an <img> src embedded in the email itself,
+// which the recipient's mail client fetches from THEIR machine, not ours. A
+// backend-relative URL (e.g. server.url resolving to http://localhost:1337 in
+// dev) is unreachable from there, so the logo silently breaks in any email
+// triggered from a non-public backend.
+const EMAIL_LOGO_URL = 'https://app.toast2host.net/t2h_logo.png'
+
 async function countConnectionsToday(actorId: number): Promise<number> {
   const start = new Date()
   start.setHours(0, 0, 0, 0)
@@ -283,11 +291,32 @@ const connectionResolvers = {
       // some other route (a stale link, a previous search result, etc).
       const hostProfiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
         filters: { user: targetId },
+        populate: { user: { fields: ['id', 'email'] } },
         limit: 1,
       })
       const hostProfile = Array.isArray(hostProfiles) ? hostProfiles[0] : null
       if (!hostProfile?.host_mode) {
         throw new Error('HOST_MODE_DISABLED')
+      }
+
+      const guestProfiles = await strapi.entityService.findMany('api::user-profile.user-profile', {
+        filters: { user: user.id },
+        populate: { user: { fields: ['id', 'email'] } },
+        limit: 1,
+      })
+      const guestProfile = Array.isArray(guestProfiles) ? guestProfiles[0] : null
+
+      // Respect the host's profile_visibility even when reached via a direct link/ID -
+      // search already filters on this, but a known user ID can otherwise route around it.
+      if (hostProfile.profile_visibility && hostProfile.profile_visibility !== 'everyone') {
+        let visible = false
+        if (hostProfile.profile_visibility === 'same_university') {
+          visible = !!(guestProfile?.university_name && hostProfile.university_name &&
+            guestProfile.university_name.toLowerCase() === hostProfile.university_name.toLowerCase())
+        } else if (hostProfile.profile_visibility === 'same_batch') {
+          visible = !!(guestProfile?.batch_year && hostProfile.batch_year && guestProfile.batch_year === hostProfile.batch_year)
+        }
+        if (!visible) throw new Error('PROFILE_NOT_VISIBLE')
       }
 
       // Only block on an already-pending request for this pair (either direction) -
@@ -349,7 +378,7 @@ const connectionResolvers = {
 
       // Enforce the host's stated guest capacity, if they've set one
       if (args.guests && hostProfile?.max_guests && args.guests > hostProfile.max_guests) {
-        throw new Error('EXCEEDS_HOST_CAPACITY')
+        throw new Error(`EXCEEDS_HOST_CAPACITY:${hostProfile.max_guests}`)
       }
 
       // Daily cap enforcement
@@ -381,33 +410,18 @@ const connectionResolvers = {
 
       // Send email notification to target user
       try {
-        // Fetch guest (actor) profile
-        const guestProfile = await strapi.entityService.findMany('api::user-profile.user-profile', {
-          filters: { user: user.id },
-          populate: { user: { fields: ['id', 'email'] } },
-          limit: 1,
-        })
-
-        // Fetch host (target) profile
-        const hostProfile = await strapi.entityService.findMany('api::user-profile.user-profile', {
-          filters: { user: targetId },
-          populate: { user: { fields: ['id', 'email'] } },
-          limit: 1,
-        })
-
-        if (guestProfile[0] && hostProfile[0] && hostProfile[0].user?.email) {
-          const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
+        if (guestProfile && hostProfile.user?.email) {
           const frontendUrl = resolveFrontendUrl(ctx)
-          const logoUrl = `${serverUrl}/t2h_logo.png`
+          const logoUrl = EMAIL_LOGO_URL
 
           await sendConnectionRequestEmail({
-            hostEmail: hostProfile[0].user.email,
-            hostFirstName: hostProfile[0].first_name || 'there',
-            guestFullName: [guestProfile[0].first_name, guestProfile[0].last_name].filter(Boolean).join(' ') || 'Alumni',
-            guestFirstName: guestProfile[0].first_name || 'Alumni',
-            guestUniversity: guestProfile[0].university_name || 'Unknown University',
-            guestBatch: guestProfile[0].batch_year ? String(guestProfile[0].batch_year) : 'Unknown',
-            guestLinkedIn: guestProfile[0].linkedin_url || undefined,
+            hostEmail: hostProfile.user.email,
+            hostFirstName: hostProfile.first_name || 'there',
+            guestFullName: [guestProfile.first_name, guestProfile.last_name].filter(Boolean).join(' ') || 'Alumni',
+            guestFirstName: guestProfile.first_name || 'Alumni',
+            guestUniversity: guestProfile.university_name || 'Unknown University',
+            guestBatch: guestProfile.batch_year ? String(guestProfile.batch_year) : 'Unknown',
+            guestLinkedIn: guestProfile.linkedin_url || undefined,
             travelDateFrom: args.travel_date_from || undefined,
             travelDateTo: args.travel_date_to || undefined,
             guestCount: args.guests || undefined,
@@ -476,9 +490,8 @@ const connectionResolvers = {
         })
 
         if (guestProfile[0] && hostProfile[0] && guestProfile[0].user?.email) {
-          const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
           const frontendUrl = resolveFrontendUrl(ctx)
-          const logoUrl = `${serverUrl}/t2h_logo.png`
+          const logoUrl = EMAIL_LOGO_URL
 
           await sendConnectionApprovedEmail({
             guestEmail: guestProfile[0].user.email,
@@ -547,9 +560,8 @@ const connectionResolvers = {
               })
 
               if (guestProfile[0]?.user?.email) {
-                const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
                 const frontendUrl = resolveFrontendUrl(ctx)
-                const logoUrl = `${serverUrl}/t2h_logo.png`
+                const logoUrl = EMAIL_LOGO_URL
 
                 await sendConnectionUnavailableEmail({
                   guestEmail: guestProfile[0].user.email,
@@ -639,9 +651,8 @@ const connectionResolvers = {
           })
 
           if (otherProfiles[0]?.user?.email) {
-            const serverUrl = strapi.config.get('server.url', 'http://localhost:1337')
             const frontendUrl = resolveFrontendUrl(ctx)
-            const logoUrl = `${serverUrl}/t2h_logo.png`
+            const logoUrl = EMAIL_LOGO_URL
 
             await sendBookingCancelledEmail({
               recipientEmail: otherProfiles[0].user.email,

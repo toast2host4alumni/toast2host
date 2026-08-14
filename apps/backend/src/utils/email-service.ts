@@ -1,6 +1,22 @@
 import fs from 'fs'
 import path from 'path'
 
+// Matches the "When" field format on the search page (formatDateShort in
+// SearchPage.tsx) - e.g. "Fri, Aug 14" - so dates read consistently between
+// the app and emails.
+function formatDateShort(dateStr?: string): string {
+  if (!dateStr) return 'Flexible'
+  const d = new Date(`${dateStr}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+// A bare email address with no display name shows as the raw address in most
+// inbox lists (e.g. "bookings@toast2host.net"), which reads as far less
+// trustworthy than a named sender - wrapping it as "Name <address>" is what
+// makes clients like Gmail show "Toast2Host" in bold instead.
+const EMAIL_FROM = `Toast2Host <${process.env.EMAIL_FROM || 'noreply@toast2host.net'}>`
+
 interface ConnectionRequestEmailData {
   hostEmail: string
   hostFirstName: string
@@ -62,8 +78,8 @@ export async function sendConnectionRequestEmail(
       .replace(/{{GUEST_FIRST_NAME}}/g, data.guestFirstName)
       .replace(/{{GUEST_UNIVERSITY}}/g, data.guestUniversity)
       .replace(/{{GUEST_BATCH}}/g, data.guestBatch)
-      .replace(/{{TRAVEL_DATE_FROM}}/g, data.travelDateFrom || 'Flexible')
-      .replace(/{{TRAVEL_DATE_TO}}/g, data.travelDateTo || 'Flexible')
+      .replace(/{{TRAVEL_DATE_FROM}}/g, formatDateShort(data.travelDateFrom))
+      .replace(/{{TRAVEL_DATE_TO}}/g, formatDateShort(data.travelDateTo))
       .replace(/{{GUEST_COUNT}}/g, data.guestCount ? String(data.guestCount) : 'Not specified')
       .replace(/{{CONNECTIONS_URL}}/g, data.connectionsUrl)
       .replace(/{{LOGO_URL}}/g, data.logoUrl)
@@ -84,7 +100,7 @@ export async function sendConnectionRequestEmail(
     // Send email using Strapi's email plugin
     await strapi.plugin('email').service('email').send({
       to: data.hostEmail,
-      from: process.env.EMAIL_FROM || 'noreply@toast2host.net',
+      from: EMAIL_FROM,
       replyTo: process.env.EMAIL_REPLY_TO || 'support@toast2host.net',
       subject: '[Toast2Host] Booking Request',
       html: htmlContent,
@@ -118,8 +134,8 @@ export async function sendConnectionApprovedEmail(
       .replace(/{{HOST_EMAIL}}/g, data.hostEmail)
       .replace(/{{HOST_UNIVERSITY}}/g, data.hostUniversity)
       .replace(/{{HOST_BATCH}}/g, data.hostBatch)
-      .replace(/{{TRAVEL_DATE_FROM}}/g, data.travelDateFrom || 'Flexible')
-      .replace(/{{TRAVEL_DATE_TO}}/g, data.travelDateTo || 'Flexible')
+      .replace(/{{TRAVEL_DATE_FROM}}/g, formatDateShort(data.travelDateFrom))
+      .replace(/{{TRAVEL_DATE_TO}}/g, formatDateShort(data.travelDateTo))
       .replace(/{{GUEST_COUNT}}/g, data.guestCount ? String(data.guestCount) : 'Not specified')
       .replace(/{{CONNECTIONS_URL}}/g, data.connectionsUrl)
       .replace(/{{LOGO_URL}}/g, data.logoUrl)
@@ -140,7 +156,7 @@ export async function sendConnectionApprovedEmail(
     // Send email using Strapi's email plugin
     await strapi.plugin('email').service('email').send({
       to: data.guestEmail,
-      from: process.env.EMAIL_FROM || 'noreply@toast2host.net',
+      from: EMAIL_FROM,
       replyTo: process.env.EMAIL_REPLY_TO || 'support@toast2host.net',
       subject: '[Toast2Host] Booking Confirmed',
       html: htmlContent,
@@ -170,14 +186,14 @@ export async function sendConnectionUnavailableEmail(
     htmlContent = htmlContent
       .replace(/{{GUEST_FIRST_NAME}}/g, data.guestFirstName)
       .replace(/{{HOST_FULL_NAME}}/g, data.hostFullName)
-      .replace(/{{TRAVEL_DATE_FROM}}/g, data.travelDateFrom || 'Flexible')
-      .replace(/{{TRAVEL_DATE_TO}}/g, data.travelDateTo || 'Flexible')
+      .replace(/{{TRAVEL_DATE_FROM}}/g, formatDateShort(data.travelDateFrom))
+      .replace(/{{TRAVEL_DATE_TO}}/g, formatDateShort(data.travelDateTo))
       .replace(/{{SEARCH_URL}}/g, data.searchUrl)
       .replace(/{{LOGO_URL}}/g, data.logoUrl)
 
     await strapi.plugin('email').service('email').send({
       to: data.guestEmail,
-      from: process.env.EMAIL_FROM || 'noreply@toast2host.net',
+      from: EMAIL_FROM,
       replyTo: process.env.EMAIL_REPLY_TO || 'support@toast2host.net',
       subject: '[Toast2Host] Your booking request is no longer available',
       html: htmlContent,
@@ -216,14 +232,14 @@ export async function sendBookingCancelledEmail(
     htmlContent = htmlContent
       .replace(/{{RECIPIENT_FIRST_NAME}}/g, data.recipientFirstName)
       .replace(/{{CANCELLER_FULL_NAME}}/g, data.cancellerFullName)
-      .replace(/{{TRAVEL_DATE_FROM}}/g, data.travelDateFrom || 'Flexible')
-      .replace(/{{TRAVEL_DATE_TO}}/g, data.travelDateTo || 'Flexible')
+      .replace(/{{TRAVEL_DATE_FROM}}/g, formatDateShort(data.travelDateFrom))
+      .replace(/{{TRAVEL_DATE_TO}}/g, formatDateShort(data.travelDateTo))
       .replace(/{{BOOKINGS_URL}}/g, data.bookingsUrl)
       .replace(/{{LOGO_URL}}/g, data.logoUrl)
 
     await strapi.plugin('email').service('email').send({
       to: data.recipientEmail,
-      from: process.env.EMAIL_FROM || 'noreply@toast2host.net',
+      from: EMAIL_FROM,
       replyTo: process.env.EMAIL_REPLY_TO || 'support@toast2host.net',
       subject: '[Toast2Host] Booking Cancelled',
       html: htmlContent,

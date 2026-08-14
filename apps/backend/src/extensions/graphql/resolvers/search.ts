@@ -12,8 +12,6 @@ type Args = {
   page?: number | null
   pageSize?: number | null
   hosts_only?: boolean | null
-  travel_date_from?: string | null
-  travel_date_to?: string | null
   guests?: number | null
 }
 
@@ -104,26 +102,17 @@ const searchResolvers = {
         filters.host_mode = true
       }
 
-      // Filter by guest capacity - only hosts who set a capacity that fits
+      // Filter by guest capacity - a host who hasn't stated a capacity is treated as
+      // unlimited (matching requestConnection's EXCEEDS_HOST_CAPACITY check, which only
+      // rejects when max_guests is actually set), not excluded outright.
       if (args.guests) {
-        filters.max_guests = { $gte: args.guests }
-      }
-
-      // Filter by travel date range - only hosts whose availability window covers it,
-      // or who marked themselves always available. Uses $and (rather than a top-level
-      // $or) so it composes safely with the university/location filters below, which
-      // also assign filters.$or and would otherwise clobber this condition.
-      if (args.travel_date_from && args.travel_date_to) {
-        const availabilityFilter = {
+        const capacityFilter = {
           $or: [
-            { always_available: true },
-            {
-              available_from: { $lte: args.travel_date_from },
-              available_to: { $gte: args.travel_date_to },
-            },
+            { max_guests: { $gte: args.guests } },
+            { max_guests: { $null: true } },
           ],
         }
-        filters.$and = filters.$and ? [...filters.$and, availabilityFilter] : [availabilityFilter]
+        filters.$and = filters.$and ? [...filters.$and, capacityFilter] : [capacityFilter]
       }
 
       // Location filters
@@ -270,6 +259,7 @@ const searchResolvers = {
           batchYear: p.batch_year || null,
           proximityMiles: proximityMiles,
           hostMode: p.host_mode || false,
+          maxGuests: p.max_guests ?? null,
           // Store visibility and batch/university for post-filtering
           _profileVisibility: p.profile_visibility || 'everyone',
           _profileUniversity: p.university_name,

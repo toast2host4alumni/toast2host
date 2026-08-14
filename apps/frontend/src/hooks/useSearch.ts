@@ -5,8 +5,8 @@ import { graphqlClient } from '@/lib/graphql/client'
 import type { SearchParams } from '@/lib/validation/search'
 
 const SEARCH_USERS = `
-  query SearchUsers($location: String, $lat: Float, $lng: Float, $scope: LocationScope, $university: String, $universities: [String!], $batch_year: Int, $sort: SearchSort, $connected_only: Boolean, $name: String, $page: Int, $pageSize: Int, $hosts_only: Boolean, $travel_date_from: String, $travel_date_to: String, $guests: Int) {
-    searchUsers(location: $location, lat: $lat, lng: $lng, scope: $scope, university: $university, universities: $universities, batch_year: $batch_year, sort: $sort, connected_only: $connected_only, name: $name, page: $page, pageSize: $pageSize, hosts_only: $hosts_only, travel_date_from: $travel_date_from, travel_date_to: $travel_date_to, guests: $guests) {
+  query SearchUsers($location: String, $lat: Float, $lng: Float, $scope: LocationScope, $university: String, $universities: [String!], $batch_year: Int, $sort: SearchSort, $connected_only: Boolean, $name: String, $page: Int, $pageSize: Int, $hosts_only: Boolean, $guests: Int) {
+    searchUsers(location: $location, lat: $lat, lng: $lng, scope: $scope, university: $university, universities: $universities, batch_year: $batch_year, sort: $sort, connected_only: $connected_only, name: $name, page: $page, pageSize: $pageSize, hosts_only: $hosts_only, guests: $guests) {
       userId
       name
       university
@@ -17,6 +17,7 @@ const SEARCH_USERS = `
       batchYear
       proximityMiles
       hostMode
+      maxGuests
     }
   }
 ` as const

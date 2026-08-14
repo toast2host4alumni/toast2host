@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { getTodayDateString } from '@/lib/date'
 
 interface TripDetailsRequiredModalProps {
@@ -6,6 +6,9 @@ interface TripDetailsRequiredModalProps {
     onClose: () => void
     onSubmit: (details: { travelDateFrom: string; travelDateTo: string; guests: number }) => void
     targetUserName: string
+    initialTravelDateFrom?: string
+    initialTravelDateTo?: string
+    initialGuests?: number
 }
 
 export default function TripDetailsRequiredModal({
@@ -13,12 +16,27 @@ export default function TripDetailsRequiredModal({
     onClose,
     onSubmit,
     targetUserName,
+    initialTravelDateFrom,
+    initialTravelDateTo,
+    initialGuests,
 }: TripDetailsRequiredModalProps) {
     const [travelDateFrom, setTravelDateFrom] = useState('')
     const [travelDateTo, setTravelDateTo] = useState('')
     const [guests, setGuests] = useState<number | undefined>(undefined)
     const [error, setError] = useState<string | null>(null)
     const today = getTodayDateString()
+
+    // Pre-fill from whatever the guest already entered in the search bar,
+    // and reset each time the modal opens for a new host.
+    useEffect(() => {
+        if (isOpen) {
+            setTravelDateFrom(initialTravelDateFrom || '')
+            setTravelDateTo(initialTravelDateTo || '')
+            setGuests(initialGuests)
+            setError(null)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, initialTravelDateFrom, initialTravelDateTo, initialGuests])
 
     if (!isOpen) return null
 

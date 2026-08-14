@@ -19,12 +19,15 @@ type Item = {
   batchYear?: number | null
   proximityMiles?: number | null
   hostMode?: boolean
+  maxGuests?: number | null
 }
 
 export interface SearchResultsProps {
   items: Item[]
   onAfterConnect?: () => void
   viewMode?: 'card' | 'list'
+  // Trip details collected up front in the search bar (Airbnb/Expedia-style).
+  // When all three are present, booking skips the modal entirely.
   travelDateFrom?: string
   travelDateTo?: string
   guests?: number
@@ -213,9 +216,12 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
       } else if (String(msg).includes('HOST_UNAVAILABLE')) {
         toast.error('This host is already booked for those dates')
       } else if (String(msg).includes('EXCEEDS_HOST_CAPACITY')) {
-        toast.error("This host can't fit that many guests")
+        const limit = String(msg).split('EXCEEDS_HOST_CAPACITY:')[1]
+        toast.error(limit ? `This host has a max guest count of ${limit}` : "This host can't fit that many guests")
       } else if (String(msg).includes('HOST_MODE_DISABLED')) {
         toast.error('This host is not currently accepting bookings')
+      } else if (String(msg).includes('PROFILE_NOT_VISIBLE')) {
+        toast.error("This host has limited who can book with them")
       } else {
         setError('Unable to connect')
         toast.error('Unable to send connection request')
@@ -235,19 +241,24 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
     }
   }
 
-  // Handle Book button click - trip details (When/Who) are required first
+  // Handle Book button click. If the guest already entered check-in/check-out/guests
+  // in the search bar, skip the modal and send the request directly (Airbnb/Expedia-style).
+  // Otherwise fall back to the modal, pre-filled with whatever was already entered.
   const handleConnect = (item: Item) => {
     if (item.hostMode === false) {
       toast.error('This host is not currently accepting bookings')
       return
     }
-    if (travelDateFrom && travelDateTo && guests) {
-      // Already selected in the search bar - use those
-      proceedAfterTripDetails(item, { travelDateFrom, travelDateTo, guests })
-    } else {
-      setPendingTripItem(item)
-      setTripModalOpen(true)
+    if (guests && item.maxGuests && guests > item.maxGuests) {
+      toast.error(`This host has a max guest count of ${item.maxGuests}`)
+      return
     }
+    if (travelDateFrom && travelDateTo && guests) {
+      proceedAfterTripDetails(item, { travelDateFrom, travelDateTo, guests })
+      return
+    }
+    setPendingTripItem(item)
+    setTripModalOpen(true)
   }
 
   // Handle trip details submitted from the modal
@@ -279,6 +290,9 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
         }}
         onSubmit={handleTripDetailsSubmit}
         targetUserName={pendingTripItem?.name || ''}
+        initialTravelDateFrom={travelDateFrom}
+        initialTravelDateTo={travelDateTo}
+        initialGuests={guests}
       />
 
       {/* LinkedIn Required Modal */}
@@ -338,6 +352,10 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
                   </p>
                 )}
 
+                {it.maxGuests != null && (
+                  <p className="text-xs text-gray-400 mb-4 -mt-2">Up to {it.maxGuests} guest{it.maxGuests > 1 ? 's' : ''}</p>
+                )}
+
                 <div className="mt-auto w-full">
                   <div className="flex justify-center">
                     <ConnectionButton item={it} onConnect={() => handleConnect(it)} isConnecting={connectingUserId === it.userId} justConnected={justConnectedIds.has(it.userId)} />
@@ -392,6 +410,10 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
                     </p>
                   )}
 
+                  {it.maxGuests != null && (
+                    <p className="text-xs text-gray-400 mb-4 -mt-2">Up to {it.maxGuests} guest{it.maxGuests > 1 ? 's' : ''}</p>
+                  )}
+
                   <div className="mt-auto w-full">
                     <div className="flex justify-center">
                       <ConnectionButton item={it} onConnect={() => handleConnect(it)} isConnecting={connectingUserId === it.userId} justConnected={justConnectedIds.has(it.userId)} />
@@ -439,6 +461,9 @@ export default function SearchResults({ items, onAfterConnect, viewMode = 'card'
                             <span className="text-primary font-semibold">• {Math.round(it.proximityMiles)} mi</span>
                           )}
                         </span>
+                      )}
+                      {it.maxGuests != null && (
+                        <span className="text-sm text-gray-400">Up to {it.maxGuests} guest{it.maxGuests > 1 ? 's' : ''}</span>
                       )}
                     </div>
                   </div>

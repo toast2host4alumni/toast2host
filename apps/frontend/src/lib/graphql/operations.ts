@@ -25,9 +25,6 @@ const ME_QUERY = `
         onboarding_completed
         host_mode
         max_guests
-        available_from
-        available_to
-        always_available
         phone_number
         profile_visibility
         updated_at
@@ -57,9 +54,6 @@ export async function getMe(options?: { skipCache?: boolean }) {
           onboarding_completed?: boolean
           host_mode?: boolean
           max_guests?: number
-          available_from?: string
-          available_to?: string
-          always_available?: boolean
           phone_number?: string
           profile_visibility?: 'everyone' | 'same_university' | 'same_batch'
           updated_at: string

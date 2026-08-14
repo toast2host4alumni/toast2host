@@ -80,24 +80,34 @@ export default function Header() {
               </Link>
               <Link
                 to="/profile"
-                className="text-gray-900 hover:text-gray-700 font-semibold transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
+                className="text-gray-900 hover:text-gray-700 font-semibold transition-colors px-3 py-2 rounded-lg hover:bg-black/5 md:!hidden"
+                title="Profile"
               >
-                <span className="hidden md:inline">Profile</span>
-                <svg className="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </Link>
-              {loggedInLabel && (
-                <span
-                  className="hidden md:inline-flex items-center gap-1.5 text-gray-900 font-semibold text-xs bg-black/10 px-3 py-1.5 rounded-full truncate max-w-[180px]"
-                  title={`Signed in as ${loggedInLabel}`}
-                >
-                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  {loggedInLabel}
-                </span>
-              )}
+              <Link
+                to="/profile"
+                className="!hidden md:!flex w-9 h-9 rounded-full bg-black/10 hover:bg-black/20 items-center justify-center transition-colors overflow-hidden flex-shrink-0"
+                title={loggedInLabel ? `Signed in as ${loggedInLabel} — view profile` : 'View profile'}
+              >
+                {currentUser?.profile?.profile_photo_url ? (
+                  <img
+                    src={currentUser.profile.profile_photo_url}
+                    alt={loggedInLabel}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-gray-900">
+                    {loggedInLabel ? loggedInLabel.charAt(0).toUpperCase() : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    )}
+                  </span>
+                )}
+              </Link>
               <button
                 onClick={handleLogout}
                 className="bg-black text-primary rounded-lg px-5 py-2 text-sm font-bold hover:bg-gray-900 ml-2 transition-all"

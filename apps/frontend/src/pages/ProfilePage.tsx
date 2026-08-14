@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { profileSchema, type ProfileInput } from '@/lib/validation/profile'
@@ -9,18 +10,15 @@ import { updateMyProfile, createPrivacyRequest, getMyPrivacyRequests } from '@/l
 import { useNavigate } from 'react-router-dom'
 import AuthGuard from '@/components/AuthGuard'
 import { useCurrentUser, useInvalidateCurrentUser } from '@/hooks/useCurrentUser'
-import { getTodayDateString } from '@/lib/date'
 
 type Req = { id: string; type: 'deletion' | 'export'; status: string; created_at: string; completed_at?: string | null }
 
 function ProfileContent() {
-  const [activeTab, setActiveTab] = useState<'profile' | 'privacy'>('profile')
+  const [activeTab, setActiveTab] = useState<'hosting' | 'profile' | 'privacy'>('hosting')
   const navigate = useNavigate()
   const { data: user, isLoading: userLoading } = useCurrentUser()
   const invalidateUser = useInvalidateCurrentUser()
   const [initialDataLoaded, setInitialDataLoaded] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
-  const today = getTodayDateString()
 
   // Privacy tab state
   const [privacyItems, setPrivacyItems] = useState<Req[]>([])
@@ -63,9 +61,6 @@ function ProfileContent() {
       if (p.batch_year) setValue('batch_year', p.batch_year)
       setValue('host_mode', p.host_mode ?? false)
       if (p.max_guests) setValue('max_guests', p.max_guests)
-      if (p.available_from) setValue('available_from', p.available_from)
-      if (p.available_to) setValue('available_to', p.available_to)
-      setValue('always_available', p.always_available ?? false)
       if (p.phone_number) setValue('phone_number', p.phone_number)
       if (p.profile_visibility && ['everyone', 'same_university', 'same_batch'].includes(p.profile_visibility)) {
         setValue('profile_visibility', p.profile_visibility as 'everyone' | 'same_university' | 'same_batch')
@@ -78,8 +73,8 @@ function ProfileContent() {
   const loc = watch(['location_text', 'location_lat', 'location_lng', 'location_scope'])
   const locationValue: LocationValue = {
     location_text: loc[0] || '',
-    location_lat: loc[1],
-    location_lng: loc[2],
+    location_lat: loc[1] ?? undefined,
+    location_lng: loc[2] ?? undefined,
     location_scope: loc[3],
   }
   const onLocationChange = (v: LocationValue) => {
@@ -91,15 +86,12 @@ function ProfileContent() {
 
   const onSubmit = async (data: ProfileInput) => {
     try {
-      const payload = data.always_available
-        ? { ...data, available_from: null, available_to: null }
-        : data
-      await updateMyProfile(payload)
+      await updateMyProfile(data)
       await invalidateUser()
-      setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      toast.success('Profile updated successfully!')
     } catch (err) {
-      console.error('Failed to update profile')
+      console.error('Failed to update profile', err)
+      toast.error('Failed to update profile')
     }
   }
 
@@ -149,6 +141,15 @@ function ProfileContent() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-200">
         <button
+          onClick={() => setActiveTab('hosting')}
+          className={`px-4 py-2 font-semibold transition-all border-b-2 ${activeTab === 'hosting'
+            ? 'text-primary border-primary'
+            : 'text-gray-500 border-transparent hover:text-gray-700'
+            }`}
+        >
+          Hosting Preferences
+        </button>
+        <button
           onClick={() => setActiveTab('profile')}
           className={`px-4 py-2 font-semibold transition-all border-b-2 ${activeTab === 'profile'
             ? 'text-primary border-primary'
@@ -168,19 +169,100 @@ function ProfileContent() {
         </button>
       </div>
 
-      {activeTab === 'profile' && (
+      {(activeTab === 'hosting' || activeTab === 'profile') && (
         <>
-          {saveSuccess && (
-            <div className="alert-success">
-              <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Profile updated successfully!
-            </div>
-          )}
-
           <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
-            {watch('profile_photo_url') && (
+            {activeTab === 'hosting' && (
+              <>
+                {/* Host Mode Toggle */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border-2 border-primary/20">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                        <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">Host Mode</p>
+                        <p className="text-sm text-gray-600">Show I'm willing to host fellow alumni</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setValue('host_mode', !watch('host_mode'))}
+                      style={{ width: '44px', height: '24px' }}
+                      className={`toggle-switch flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${watch('host_mode') ? 'bg-primary' : 'bg-gray-300'
+                        }`}
+                      role="switch"
+                      aria-checked={watch('host_mode')}
+                    >
+                      <span
+                        style={{ width: '20px', height: '20px', top: '2px', left: watch('host_mode') ? '22px' : '2px' }}
+                        className="absolute rounded-full bg-white shadow transition-all duration-200 ease-in-out"
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Host capacity - only relevant when Host Mode is on */}
+                {watch('host_mode') && (
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-xl border-2 border-gray-100">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700">Max Guests</label>
+                      <input
+                        className="w-full"
+                        type="number"
+                        min={1}
+                        placeholder="e.g. 2"
+                        // Controlled via explicit value: this field mounts/unmounts twice now
+                        // (Host Mode toggle + Hosting/Profile tab switch), and as an uncontrolled
+                        // input it lost sync with react-hook-form's stored value across that
+                        // remount, submitting a stale value that failed validation.
+                        value={watch('max_guests') ?? ''}
+                        {...register('max_guests', {
+                          // valueAsNumber turns a blank input into NaN, which z.number()
+                          // rejects outright even though this field is meant to be optional
+                          // (no max_guests set = no stated capacity limit) - setValueAs lets
+                          // us map blank to null instead. It has to be null rather than
+                          // undefined: an undefined value gets stripped from the GraphQL
+                          // request entirely, so clearing the field would silently leave
+                          // whatever limit was previously saved untouched on the backend.
+                          //
+                          // Must handle null/undefined as pass-through, not just '': this field
+                          // mounts/unmounts (Host Mode toggle + Hosting/Profile tab switch), and
+                          // react-hook-form re-runs setValueAs on remount using the ALREADY
+                          // converted stored value, not the raw input value. Number(null) is 0
+                          // (not NaN), so without this the field silently corrupts from "no
+                          // limit" (null) into an invalid 0 on every remount.
+                          setValueAs: (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+                        })}
+                      />
+                      {errors.max_guests && (
+                        <p className="text-red-600 text-sm font-medium">{errors.max_guests.message}</p>
+                      )}
+                      <p className="text-xs text-gray-500">Leave blank if you don't have a set limit</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Profile Visibility */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Profile Visibility</label>
+                  <select
+                    className="w-full border-2 border-gray-200 rounded-lg py-2.5 px-3 focus:border-primary focus:ring-primary"
+                    {...register('profile_visibility')}
+                  >
+                    <option value="everyone">Everyone - Visible to all alumni</option>
+                    <option value="same_university">Same University - Only visible to alumni from my university</option>
+                    <option value="same_batch">Same Batch - Only visible to alumni from my batch year</option>
+                  </select>
+                  <p className="text-xs text-gray-500">Control who can see your profile in search results</p>
+                </div>
+              </>
+            )}
+
+            {activeTab === 'profile' && watch('profile_photo_url') && (
               <div className="flex justify-center">
                 <img
                   src={watch('profile_photo_url')}
@@ -190,6 +272,8 @@ function ProfileContent() {
               </div>
             )}
 
+            {activeTab === 'profile' && (
+              <>
             {/* Email (non-editable) */}
             {user?.email && (
               <div className="space-y-2">
@@ -307,93 +391,8 @@ function ProfileContent() {
               />
               <p className="text-xs text-gray-500">...for faster connectivity</p>
             </div>
-
-            {/* Host Mode Toggle - new field */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border-2 border-primary/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900">Host Mode</p>
-                    <p className="text-sm text-gray-600">Show I'm willing to host fellow alumni</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setValue('host_mode', !watch('host_mode'))}
-                  style={{ width: '44px', height: '24px' }}
-                  className={`toggle-switch flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${watch('host_mode') ? 'bg-primary' : 'bg-gray-300'
-                    }`}
-                  role="switch"
-                  aria-checked={watch('host_mode')}
-                >
-                  <span
-                    style={{ width: '20px', height: '20px', top: '2px', left: watch('host_mode') ? '22px' : '2px' }}
-                    className="absolute rounded-full bg-white shadow transition-all duration-200 ease-in-out"
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Host capacity + availability - only relevant when Host Mode is on */}
-            {watch('host_mode') && (
-              <div className="space-y-3 p-4 bg-gray-50 rounded-xl border-2 border-gray-100">
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Max Guests</label>
-                  <input
-                    className="w-full"
-                    type="number"
-                    min={1}
-                    placeholder="e.g. 2"
-                    {...register('max_guests', { valueAsNumber: true })}
-                  />
-                  {errors.max_guests && (
-                    <p className="text-red-600 text-sm font-medium">{errors.max_guests.message}</p>
-                  )}
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4"
-                    checked={!!watch('always_available')}
-                    onChange={(e) => setValue('always_available', e.target.checked)}
-                  />
-                  <span className="text-sm font-semibold text-gray-700">I'm always available</span>
-                </label>
-
-                {!watch('always_available') && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">Available From</label>
-                      <input className="w-full" type="date" min={today} {...register('available_from')} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">Available To</label>
-                      <input className="w-full" type="date" min={watch('available_from') || today} {...register('available_to')} />
-                    </div>
-                  </div>
-                )}
-                <p className="text-xs text-gray-500">Lets travelers filter for hosts who can fit their group and dates</p>
-              </div>
+              </>
             )}
-
-            {/* Profile Visibility - new field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Profile Visibility</label>
-              <select
-                className="w-full border-2 border-gray-200 rounded-lg py-2.5 px-3 focus:border-primary focus:ring-primary"
-                {...register('profile_visibility')}
-              >
-                <option value="everyone">Everyone - Visible to all alumni</option>
-                <option value="same_university">Same University - Only visible to alumni from my university</option>
-                <option value="same_batch">Same Batch - Only visible to alumni from my batch year</option>
-              </select>
-              <p className="text-xs text-gray-500">Control who can see your profile in search results</p>
-            </div>
 
             <div className="flex gap-3 pt-2">
               <button

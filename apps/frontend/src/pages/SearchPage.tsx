@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { SlidersHorizontal } from 'lucide-react'
+import { Calendar, SlidersHorizontal } from 'lucide-react'
 import SearchResults from '@/components/SearchResults'
 import { useSearch } from '@/hooks/useSearch'
 import AuthGuard from '@/components/AuthGuard'
@@ -10,9 +10,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { getTodayDateString } from '@/lib/date'
 
+function formatDateShort(dateStr: string) {
+  const d = new Date(`${dateStr}T00:00:00`)
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
 function SearchContent() {
   const { data: user } = useCurrentUser()
-  const today = getTodayDateString()
   const [searchMode, setSearchMode] = useState<'all' | 'same_university' | 'same_batch'>('all')
   const [locationValue, setLocationValue] = useState<LocationValue>({
     location_text: '',
@@ -23,9 +27,10 @@ function SearchContent() {
   const [university, setUniversity] = useState<string>('')
   const [universities, setUniversities] = useState<string[]>([])
   const [batchYear, setBatchYear] = useState<number | undefined>(undefined)
-  const [travelDateFrom, setTravelDateFrom] = useState<string>('')
-  const [travelDateTo, setTravelDateTo] = useState<string>('')
+  const [checkIn, setCheckIn] = useState('')
+  const [checkOut, setCheckOut] = useState('')
   const [guests, setGuests] = useState<number | undefined>(undefined)
+  const today = getTodayDateString()
   const [sort, setSort] = useState<'proximity' | 'recent' | 'name'>('recent')
   const [connectedOnly, setConnectedOnly] = useState(false)
   // Defaults to true - this is a booking tool, so the primary search experience
@@ -73,23 +78,30 @@ function SearchContent() {
     sort,
     connected_only: connectedOnly || undefined,
     hosts_only: hostsOnly || undefined,
-    travel_date_from: travelDateFrom || undefined,
-    travel_date_to: travelDateTo || undefined,
     guests,
-  }), [locationValue, university, universities, batchYear, sort, connectedOnly, hostsOnly, travelDateFrom, travelDateTo, guests])
+  }), [locationValue, university, universities, batchYear, sort, connectedOnly, hostsOnly, guests])
 
   const { data, fetchNextPage, hasNextPage, isFetching, refetch } = useSearch(params, 20)
 
   const items = (data?.pages ?? []).flatMap((p) => p.items)
 
-  const activeFilterCount = (searchMode !== 'all' ? 1 : 0) + (batchYear ? 1 : 0) + (universities.length > 0 ? 1 : 0)
+  const activeFilterCount = (searchMode !== 'all' ? 1 : 0) + (batchYear ? 1 : 0) + (universities.length > 0 ? 1 : 0) + (connectedOnly ? 1 : 0) + (!hostsOnly ? 1 : 0)
 
   return (
     <main className="p-3 max-w-7xl mx-auto space-y-4">
       {/* Header */}
       <div className="text-left">
         <h1 className="text-4xl font-black text-gray-900">Find Alumni</h1>
-        <p className="text-gray-600 mt-2">Connect with alumni from universities around the world</p>
+        <p className="text-gray-600 mt-2">Stay with alumni from universities around the world</p>
+      </div>
+
+      {/* Pilot scope notice - informational only, not a restriction. Anyone can
+          create a profile and connect regardless of university or location. */}
+      <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 text-gray-800 text-sm rounded-lg px-4 py-2.5">
+        <span aria-hidden="true">🎓</span>
+        <p>
+          <span className="font-semibold">Currently piloting with BITS Pilani alumni in the USA</span> — but everyone's welcome. Connect with any alumni, wherever you both are.
+        </p>
       </div>
 
       {/* Results */}
@@ -97,7 +109,7 @@ function SearchContent() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 min-h-[500px]">
           {/* Search Filters - Always visible */}
           <div className="mb-4 pb-3 border-b border-gray-200 space-y-3">
-            {/* Row 1: Where / When / Who - single Airbnb-style pill row, + Filters button */}
+            {/* Row 1: Where / Who - single Airbnb-style pill row, + Filters button */}
             <div className="flex flex-col md:flex-row gap-3 items-stretch">
             <div className="flex-1 grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] rounded-lg border-2 border-gray-200 divide-y md:divide-y-0 md:divide-x divide-gray-200 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.05)] bg-white">
               <LocationCombobox value={locationValue} onChange={onLocationChange} label="Where do you want to go?" variant="bare" />
@@ -106,46 +118,52 @@ function SearchContent() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="flex flex-col items-start px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50 data-[state=open]:bg-primary/5 data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-primary"
+                    className="flex !items-start !justify-start gap-2 px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50 data-[state=open]:bg-primary/5 data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-primary"
                   >
-                    <span className="text-xs font-semibold text-gray-700">When</span>
-                    <span className={`text-sm truncate ${travelDateFrom && travelDateTo ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {travelDateFrom && travelDateTo ? `${travelDateFrom} → ${travelDateTo}` : 'Add dates'}
+                    <Calendar className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                    <span className="flex flex-col items-start min-w-0">
+                      <label>When</label>
+                      <span className={`text-base truncate ${checkIn && checkOut ? 'text-gray-900' : 'text-gray-400'}`}>
+                        {checkIn && checkOut ? `${formatDateShort(checkIn)} - ${formatDateShort(checkOut)}` : 'Add dates'}
+                      </span>
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72" align="start">
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-semibold text-gray-700">Check-in</label>
+                <PopoverContent className="w-96" align="start">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700">Check-in</label>
                       <input
                         type="date"
-                        className="w-full"
-                        value={travelDateFrom}
+                        className="w-[150px] border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-2.5 px-3 text-base"
+                        value={checkIn}
                         min={today}
-                        onChange={(e) => setTravelDateFrom(e.target.value)}
+                        onChange={(e) => {
+                          setCheckIn(e.target.value)
+                          if (checkOut && checkOut < e.target.value) setCheckOut('')
+                        }}
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="block text-xs font-semibold text-gray-700">Check-out</label>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700">Check-out</label>
                       <input
                         type="date"
-                        className="w-full"
-                        value={travelDateTo}
-                        min={travelDateFrom || today}
-                        onChange={(e) => setTravelDateTo(e.target.value)}
+                        className="w-[150px] border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-2.5 px-3 text-base"
+                        value={checkOut}
+                        min={checkIn || today}
+                        onChange={(e) => setCheckOut(e.target.value)}
                       />
                     </div>
-                    {(travelDateFrom || travelDateTo) && (
-                      <button
-                        type="button"
-                        onClick={() => { setTravelDateFrom(''); setTravelDateTo('') }}
-                        className="text-xs font-semibold text-gray-500 hover:text-gray-700 underline"
-                      >
-                        Clear dates
-                      </button>
-                    )}
                   </div>
+                  {(checkIn || checkOut) && (
+                    <button
+                      type="button"
+                      onClick={() => { setCheckIn(''); setCheckOut('') }}
+                      className="mt-2 text-xs font-semibold text-gray-500 hover:text-gray-700 underline"
+                    >
+                      Clear dates
+                    </button>
+                  )}
                 </PopoverContent>
               </Popover>
 
@@ -153,10 +171,10 @@ function SearchContent() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="flex flex-col items-start px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50 data-[state=open]:bg-primary/5 data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-primary"
+                    className="flex flex-col !items-start !justify-start px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50 data-[state=open]:bg-primary/5 data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-primary"
                   >
-                    <span className="text-xs font-semibold text-gray-700">Who</span>
-                    <span className={`text-sm truncate ${guests ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <label>Who</label>
+                    <span className={`text-base truncate ${guests ? 'text-gray-900' : 'text-gray-400'}`}>
                       {guests ? `${guests} guest${guests > 1 ? 's' : ''}` : 'Add guests'}
                     </span>
                   </button>
@@ -193,7 +211,7 @@ function SearchContent() {
               </Popover>
             </div>
 
-            {/* Filters button - Search Mode, Batch Year, University live in this panel */}
+            {/* Filters button - Match Alumni, Batch Year, University live in this panel */}
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -210,8 +228,47 @@ function SearchContent() {
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-80 space-y-4" align="end">
+                <div className="space-y-2 pb-1 border-b border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setHostsOnly(!hostsOnly)}
+                    className="w-full inline-flex items-center !justify-start gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
+                  >
+                    <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${hostsOnly
+                      ? 'bg-primary border-primary'
+                      : 'bg-white border-gray-300 group-hover:border-gray-400'
+                      }`}>
+                      <svg className={`w-3 h-3 text-black transition-opacity ${hostsOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                      Show only hosts
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setConnectedOnly(!connectedOnly)}
+                    className="w-full inline-flex items-center !justify-start gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
+                  >
+                    <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${connectedOnly
+                      ? 'bg-primary border-primary'
+                      : 'bg-white border-gray-300 group-hover:border-gray-400'
+                      }`}>
+                      <svg className={`w-3 h-3 text-black transition-opacity ${connectedOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                    <span>Show only my previous hosts</span>
+                  </button>
+                </div>
+
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Search Mode</label>
+                  <label className="block text-sm font-semibold text-gray-700">Match Alumni</label>
                   <div className="relative">
                     <select
                       className="w-full border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-primary py-2 px-3 pr-8 text-base appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.05)] bg-white !bg-none"
@@ -242,10 +299,11 @@ function SearchContent() {
                 {searchMode === 'all' && (
                   <UniversityMultiSelect value={universities} onChange={setUniversities} label="Choose Alumni host from" />
                 )}
+
                 {activeFilterCount > 0 && (
                   <button
                     type="button"
-                    onClick={() => { setSearchMode('all'); setBatchYear(undefined); setUniversities([]) }}
+                    onClick={() => { setSearchMode('all'); setBatchYear(undefined); setUniversities([]); setConnectedOnly(false); setHostsOnly(true) }}
                     className="text-xs font-semibold text-gray-500 hover:text-gray-700 underline"
                   >
                     Clear filters
@@ -255,7 +313,7 @@ function SearchContent() {
             </Popover>
             </div>
 
-            {/* Mobile: Additional filters */}
+            {/* Mobile: Sort */}
             <div className="block md:hidden space-y-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Sort by</label>
@@ -275,45 +333,6 @@ function SearchContent() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-6">
-                <button
-                  type="button"
-                  onClick={() => setConnectedOnly(!connectedOnly)}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
-                >
-                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${connectedOnly
-                    ? 'bg-primary border-primary'
-                    : 'bg-white border-gray-300 group-hover:border-gray-400'
-                    }`}>
-                    <svg className={`w-3 h-3 text-black transition-opacity ${connectedOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </span>
-                  <span>Show only my previous hosts</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setHostsOnly(!hostsOnly)}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
-                >
-                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${hostsOnly
-                    ? 'bg-primary border-primary'
-                    : 'bg-white border-gray-300 group-hover:border-gray-400'
-                    }`}>
-                    <svg className={`w-3 h-3 text-black transition-opacity ${hostsOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    Show only hosts
-                  </span>
-                </button>
-              </div>
-
               <div className="flex items-center justify-center gap-2 pt-2">
                 <p className="text-sm text-gray-600 font-medium">
                   Found <span className="text-primary font-bold">{items.length}</span> alumni
@@ -327,49 +346,9 @@ function SearchContent() {
               </div>
             </div>
 
-            {/* Desktop: Hide Connections (left) | Found count (center) | Sort, View Toggle (right) */}
+            {/* Desktop: Found count (left) | Sort, View Toggle (right) */}
             <div className="hidden md:flex flex-wrap items-center justify-between gap-3 min-h-[40px]">
-              {/* Left: Filter Connections */}
-              <div className="flex items-center gap-12">
-                <button
-                  type="button"
-                  onClick={() => setConnectedOnly(!connectedOnly)}
-                  className="inline-flex items-center gap-3 text-sm font-medium text-gray-600 cursor-pointer select-none whitespace-nowrap hover:text-gray-900 transition-colors group"
-                >
-                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${connectedOnly
-                    ? 'bg-primary border-primary'
-                    : 'bg-white border-gray-300 group-hover:border-gray-400'
-                    }`}>
-                    <svg className={`w-3 h-3 text-black transition-opacity ${connectedOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </span>
-                  <span>Show only my previous hosts</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setHostsOnly(!hostsOnly)}
-                  className="inline-flex items-center gap-3 text-sm font-medium text-gray-600 cursor-pointer select-none whitespace-nowrap hover:text-gray-900 transition-colors group"
-                >
-                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${hostsOnly
-                    ? 'bg-primary border-primary'
-                    : 'bg-white border-gray-300 group-hover:border-gray-400'
-                    }`}>
-                    <svg className={`w-3 h-3 text-black transition-opacity ${hostsOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    Show only hosts
-                  </span>
-                </button>
-              </div>
-
-              {/* Center: Found count */}
+              {/* Left: Found count */}
               <div className="flex items-center gap-2">
                 <p className="text-sm text-gray-600 font-medium">
                   Found <span className="text-primary font-bold">{items.length}</span> alumni
@@ -434,11 +413,9 @@ function SearchContent() {
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-              <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-lg font-semibold text-gray-700 mb-1">No results found</p>
-              <p className="text-sm">Try adjusting your filters or search criteria</p>
+              <img src="/TOAST_MAN_LOGO.jpeg" alt="Toast Man" className="w-24 h-24 rounded-full object-cover mb-4 shadow-md" />
+              <p className="text-lg font-semibold text-gray-700 mb-1">Toast Man's mailbox came up empty</p>
+              <p className="text-sm">No alumni matched that search — try adjusting your filters or criteria</p>
             </div>
           ) : (
             <>
@@ -446,8 +423,8 @@ function SearchContent() {
                 items={items}
                 onAfterConnect={() => refetch()}
                 viewMode={viewMode}
-                travelDateFrom={travelDateFrom || undefined}
-                travelDateTo={travelDateTo || undefined}
+                travelDateFrom={checkIn || undefined}
+                travelDateTo={checkOut || undefined}
                 guests={guests}
               />
               {hasNextPage && (
