@@ -1,4 +1,4 @@
-import { sendConnectionRequestEmail, sendConnectionApprovedEmail, sendConnectionUnavailableEmail, sendBookingCancelledEmail } from '../../../utils/email-service'
+import { sendConnectionRequestEmail, sendConnectionApprovedEmail, sendHostConnectionConfirmedEmail, sendConnectionUnavailableEmail, sendBookingCancelledEmail, EMAIL_LOGO_URL } from '../../../utils/email-service'
 
 type GQLCtx = { state: { user?: { id: number } }; koaContext?: { request?: { header?: { origin?: string } } } }
 
@@ -18,14 +18,6 @@ function resolveFrontendUrl(ctx: GQLCtx): string {
   if (origin && ALLOWED_FRONTEND_ORIGINS.includes(origin)) return origin
   return process.env.FRONTEND_URL || 'https://app.toast2host.net'
 }
-
-// Fixed to the production frontend regardless of environment - unlike
-// resolveFrontendUrl() this is for an <img> src embedded in the email itself,
-// which the recipient's mail client fetches from THEIR machine, not ours. A
-// backend-relative URL (e.g. server.url resolving to http://localhost:1337 in
-// dev) is unreachable from there, so the logo silently breaks in any email
-// triggered from a non-public backend.
-const EMAIL_LOGO_URL = 'https://app.toast2host.net/t2h_logo.png'
 
 async function countConnectionsToday(actorId: number): Promise<number> {
   const start = new Date()
@@ -492,21 +484,42 @@ const connectionResolvers = {
         if (guestProfile[0] && hostProfile[0] && guestProfile[0].user?.email) {
           const frontendUrl = resolveFrontendUrl(ctx)
           const logoUrl = EMAIL_LOGO_URL
+          const connectionsUrl = `${frontendUrl}/connections`
 
           await sendConnectionApprovedEmail({
             guestEmail: guestProfile[0].user.email,
             guestFirstName: guestProfile[0].first_name || 'there',
             hostFullName: [hostProfile[0].first_name, hostProfile[0].last_name].filter(Boolean).join(' ') || 'Alumni',
             hostEmail: hostProfile[0].user?.email || '',
+            hostPhone: hostProfile[0].phone_number || undefined,
             hostUniversity: hostProfile[0].university_name || 'Unknown University',
             hostBatch: hostProfile[0].batch_year ? String(hostProfile[0].batch_year) : 'Unknown',
             hostLocation: hostProfile[0].location_text || undefined,
             travelDateFrom: conn.travel_date_from || undefined,
             travelDateTo: conn.travel_date_to || undefined,
             guestCount: conn.guest_count || undefined,
-            connectionsUrl: `${frontendUrl}/connections`,
+            connectionsUrl,
             logoUrl,
           })
+
+          // Reciprocal: the host approved the request, but had no email with the
+          // guest's contact info to act on - only the guest got the host's, until now.
+          if (hostProfile[0].user?.email) {
+            await sendHostConnectionConfirmedEmail({
+              hostEmail: hostProfile[0].user.email,
+              hostFirstName: hostProfile[0].first_name || 'there',
+              guestFullName: [guestProfile[0].first_name, guestProfile[0].last_name].filter(Boolean).join(' ') || 'Alumni',
+              guestEmail: guestProfile[0].user.email,
+              guestPhone: guestProfile[0].phone_number || undefined,
+              guestUniversity: guestProfile[0].university_name || 'Unknown University',
+              guestBatch: guestProfile[0].batch_year ? String(guestProfile[0].batch_year) : 'Unknown',
+              travelDateFrom: conn.travel_date_from || undefined,
+              travelDateTo: conn.travel_date_to || undefined,
+              guestCount: conn.guest_count || undefined,
+              connectionsUrl,
+              logoUrl,
+            })
+          }
         }
       } catch (emailError) {
         console.error('Failed to send booking confirmation email:', emailError)

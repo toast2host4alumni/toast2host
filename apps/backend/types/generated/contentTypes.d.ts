@@ -501,6 +501,7 @@ export interface ApiConnectionConnection extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    reminder_sent: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     status: Schema.Attribute.Enumeration<
       ['pending', 'connected', 'rejected', 'cancelled']
     > &

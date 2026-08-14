@@ -155,22 +155,22 @@
 
     <!-- Main Content -->
     <div class="content">
-      <div class="greeting">Hi {{GUEST_FIRST_NAME}},</div>
+      <div class="greeting">Hi {{HOST_FIRST_NAME}},</div>
 
       <!-- Success Highlight -->
       <div class="highlight-box">
-        <p class="highlight-text">🎉 Great news! {{HOST_FULL_NAME}} has confirmed your booking request!</p>
+        <p class="highlight-text">🎉 You've confirmed the booking with {{GUEST_FULL_NAME}}!</p>
       </div>
 
       <div class="message">
-        Your stay is confirmed! You can now reach out directly to coordinate the details with {{HOST_FULL_NAME}}.
+        Here's {{GUEST_FULL_NAME}}'s contact info so you can coordinate the details of their stay.
       </div>
 
-      <!-- Host Profile Card -->
+      <!-- Guest Profile Card -->
       <div class="profile-card">
         <div class="profile-info">
           <div class="profile-label">Booking Confirmed With</div>
-          <div class="profile-value">{{HOST_FULL_NAME}}</div>
+          <div class="profile-value">{{GUEST_FULL_NAME}}</div>
         </div>
         <div class="profile-info">
           <div class="profile-label">Dates of Stay</div>
@@ -182,18 +182,12 @@
         </div>
         <div class="profile-info">
           <div class="profile-label">University</div>
-          <div class="profile-value">{{HOST_UNIVERSITY}}</div>
+          <div class="profile-value">{{GUEST_UNIVERSITY}}</div>
         </div>
         <div class="profile-info">
           <div class="profile-label">Batch Year</div>
-          <div class="profile-value">{{HOST_BATCH}}</div>
+          <div class="profile-value">{{GUEST_BATCH}}</div>
         </div>
-        {{#if HOST_LOCATION}}
-        <div class="profile-info">
-          <div class="profile-label">Location</div>
-          <div class="profile-value">{{HOST_LOCATION}}</div>
-        </div>
-        {{/if}}
       </div>
 
       <div class="divider"></div>
@@ -202,18 +196,18 @@
       <div class="contact-info">
         <div class="profile-label">Contact Email</div>
         <div style="margin-top: 4px;">
-          <a href="mailto:{{HOST_EMAIL}}" class="email-link">{{HOST_EMAIL}}</a>
+          <a href="mailto:{{GUEST_EMAIL}}" class="email-link">{{GUEST_EMAIL}}</a>
         </div>
-        {{#if HOST_PHONE}}
+        {{#if GUEST_PHONE}}
         <div class="profile-label" style="margin-top: 8px;">Contact Phone</div>
         <div style="margin-top: 4px;">
-          <a href="tel:{{HOST_PHONE}}" class="email-link">{{HOST_PHONE}}</a>
+          <a href="tel:{{GUEST_PHONE}}" class="email-link">{{GUEST_PHONE}}</a>
         </div>
         {{/if}}
       </div>
 
       <div class="message">
-        Feel free to reach out to coordinate your visit. We're excited for your stay!
+        Feel free to reach out to coordinate their visit. Thanks for hosting fellow alumni!
       </div>
 
       <!-- CTA Button -->

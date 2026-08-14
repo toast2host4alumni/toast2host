@@ -16,7 +16,7 @@ const QA_BY_TOPIC: Record<Topic, QA[]> = {
   search: [
     {
       q: 'How do I search for a host?',
-      a: "Go to Search and filter by university, batch year, location, or travel dates. By default we only show alumni who are actively hosting - toggle \"Show only hosts\" off to browse the full alumni directory instead.",
+      a: "Go to Search and filter by university, batch year, or location. By default we only show alumni who are actively hosting - toggle \"Show only hosts\" off to browse the full alumni directory instead.",
     },
     {
       q: 'What does "Show only hosts" mean?',
@@ -24,7 +24,7 @@ const QA_BY_TOPIC: Record<Topic, QA[]> = {
     },
     {
       q: 'How do dates and guest count affect results?',
-      a: "Set your travel dates and guest count in the \"When\"/\"Who\" fields, and hosts who aren't available for those dates or can't fit your group won't show up in results.",
+      a: "Guest count in the \"Who\" field filters out hosts who can't fit your group. Travel dates in \"When\" don't filter search results - they just get carried into your booking request so you don't have to re-enter them.",
     },
   ],
   bookings: [
@@ -49,10 +49,6 @@ const QA_BY_TOPIC: Record<Topic, QA[]> = {
     {
       q: 'What does Host Mode do?',
       a: "Turning on Host Mode lets other alumni send you booking requests. Turn it off any time to stop receiving new requests - it won't affect stays you've already confirmed.",
-    },
-    {
-      q: 'How do I set my availability?',
-      a: 'In Profile, toggle "I\'m always available", or set specific Available From/To dates. Guests searching outside that window won\'t see you as an available host.',
     },
     {
       q: 'Can I change my name or email?',

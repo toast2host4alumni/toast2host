@@ -31,6 +31,10 @@
     },
     "guest_count": {
       "type": "integer"
+    },
+    "reminder_sent": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

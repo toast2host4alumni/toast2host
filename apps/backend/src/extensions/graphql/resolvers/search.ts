@@ -298,8 +298,11 @@ const searchResolvers = {
         })
       }
 
-      // Sort connected users first by default (unless filtering to connected_only)
-      if (!args.connected_only && actorId) {
+      // Sort connected users first, but only in the default browsing order - an
+      // explicit sort choice (proximity/name) must not be silently overridden by this,
+      // or e.g. a far-away connected host would rank above a much closer new one.
+      const isDefaultSort = !args.sort || args.sort === 'recent'
+      if (!args.connected_only && actorId && isDefaultSort) {
         results.sort((a, b) => {
           // Connected users first
           if (a.connectionStatus === 'connected' && b.connectionStatus !== 'connected') return -1
