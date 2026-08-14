@@ -32,7 +32,6 @@ function SearchContent() {
   const [guests, setGuests] = useState<number | undefined>(undefined)
   const today = getTodayDateString()
   const [sort, setSort] = useState<'proximity' | 'recent' | 'name'>('recent')
-  const [connectedOnly, setConnectedOnly] = useState(false)
   // Defaults to true - this is a booking tool, so the primary search experience
   // should surface people who are actually accepting guests. The toggle lets
   // guests opt into browsing the full alumni directory instead.
@@ -76,16 +75,15 @@ function SearchContent() {
     universities: universities.length > 0 ? universities : undefined,
     batch_year: batchYear,
     sort,
-    connected_only: connectedOnly || undefined,
     hosts_only: hostsOnly || undefined,
     guests,
-  }), [locationValue, university, universities, batchYear, sort, connectedOnly, hostsOnly, guests])
+  }), [locationValue, university, universities, batchYear, sort, hostsOnly, guests])
 
   const { data, fetchNextPage, hasNextPage, isFetching, refetch } = useSearch(params, 20)
 
   const items = (data?.pages ?? []).flatMap((p) => p.items)
 
-  const activeFilterCount = (searchMode !== 'all' ? 1 : 0) + (batchYear ? 1 : 0) + (universities.length > 0 ? 1 : 0) + (connectedOnly ? 1 : 0) + (!hostsOnly ? 1 : 0)
+  const activeFilterCount = (searchMode !== 'all' ? 1 : 0) + (batchYear ? 1 : 0) + (universities.length > 0 ? 1 : 0) + (!hostsOnly ? 1 : 0)
 
   return (
     <main className="p-3 max-w-7xl mx-auto space-y-4">
@@ -93,15 +91,6 @@ function SearchContent() {
       <div className="text-left">
         <h1 className="text-4xl font-black text-gray-900">Find Alumni</h1>
         <p className="text-gray-600 mt-2">Stay with alumni from universities around the world</p>
-      </div>
-
-      {/* Pilot scope notice - informational only, not a restriction. Anyone can
-          create a profile and connect regardless of university or location. */}
-      <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 text-gray-800 text-sm rounded-lg px-4 py-2.5">
-        <span aria-hidden="true">🎓</span>
-        <p>
-          <span className="font-semibold">Currently piloting with BITS Pilani alumni in the USA</span> — but everyone's welcome. Connect with any alumni, wherever you both are.
-        </p>
       </div>
 
       {/* Results */}
@@ -249,22 +238,6 @@ function SearchContent() {
                       Show only hosts
                     </span>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setConnectedOnly(!connectedOnly)}
-                    className="w-full inline-flex items-center !justify-start gap-2 text-sm font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors group"
-                  >
-                    <span className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${connectedOnly
-                      ? 'bg-primary border-primary'
-                      : 'bg-white border-gray-300 group-hover:border-gray-400'
-                      }`}>
-                      <svg className={`w-3 h-3 text-black transition-opacity ${connectedOnly ? 'opacity-100' : 'opacity-0'}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    <span>Show only my previous hosts</span>
-                  </button>
                 </div>
 
                 <div className="space-y-2">
@@ -303,7 +276,7 @@ function SearchContent() {
                 {activeFilterCount > 0 && (
                   <button
                     type="button"
-                    onClick={() => { setSearchMode('all'); setBatchYear(undefined); setUniversities([]); setConnectedOnly(false); setHostsOnly(true) }}
+                    onClick={() => { setSearchMode('all'); setBatchYear(undefined); setUniversities([]); setHostsOnly(true) }}
                     className="text-xs font-semibold text-gray-500 hover:text-gray-700 underline"
                   >
                     Clear filters
