@@ -32,18 +32,23 @@ export default ({ env }: any) => ({
       },
     },
   },
-  // Email configuration - AWS SES
+  // Email configuration - Brevo, via SMTP relay (switched from AWS SES after
+  // its production-access request was denied - see AWS's response for
+  // context). Brevo restricts SMTP relay to IPs explicitly authorized in
+  // their dashboard (Security -> Authorized IPs), so this will only work
+  // from the EC2 backend's static IP and whichever dev machine's current
+  // public IP has been added there.
   email: {
     config: {
-      provider: 'amazon-ses',
+      provider: 'nodemailer',
       providerOptions: {
-        key: env('AWS_SES_KEY'),
-        secret: env('AWS_SES_SECRET'),
-        // Must be a full endpoint URL, not a bare region string - the provider
-        // parses the region back out of this via a `email.<region>.amazonaws.com`
-        // regex match. Passing just "us-east-1" here silently sets an invalid
-        // SESClient `endpoint` instead of the intended region.
-        amazon: `https://email.${env('AWS_SES_REGION', 'us-east-1')}.amazonaws.com`,
+        host: env('SMTP_HOST', 'smtp-relay.brevo.com'),
+        port: env.int('SMTP_PORT', 587),
+        secure: false, // port 587 uses STARTTLS, not implicit TLS
+        auth: {
+          user: env('SMTP_USERNAME'),
+          pass: env('SMTP_PASSWORD'),
+        },
       },
       settings: {
         defaultFrom: env('EMAIL_FROM', 'noreply@toast2host.net'),
