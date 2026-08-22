@@ -1,4 +1,7 @@
+console.log('TEMP DEBUG: strapi-server.ts extension file was required')
+
 export default (plugin: any) => {
+  console.log('TEMP DEBUG: strapi-server.ts default export invoked with plugin')
   // Override the OAuth callback to save Google profile photo + name.
   // Name fields are re-synced from Google on every login so the app's
   // identity stays tied to the authenticated Google account (supports
