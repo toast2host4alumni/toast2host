@@ -21,13 +21,6 @@ function AuthCallbackContent() {
           return
         }
 
-        // Fetch Google user info
-        const googleUserRes = await fetch(
-          `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`
-        )
-        const googleUser = googleUserRes.ok ? await googleUserRes.json() : null
-
-        // Call Strapi's callback endpoint to exchange for JWT
         const STRAPI_URL = import.meta.env.VITE_STRAPI_URL
 
         if (!STRAPI_URL) {
@@ -44,91 +37,26 @@ function AuthCallbackContent() {
 
         const data = await response.json()
 
-        if (data.jwt) {
-          setAuthToken(data.jwt)
-
-          // Auto-create profile with Google data only on first login
-          if (googleUser) {
-            try {
-              // Check if profile already exists and is completed
-              const profileCheckRes = await fetch(`${STRAPI_URL}/graphql`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${data.jwt}`,
-                },
-                body: JSON.stringify({
-                  query: `query CurrentUser {
-                    currentUser { id profile { id onboarding_completed } }
-                  }`,
-                }),
-              })
-              const profileCheckData = await profileCheckRes.json()
-              const hasCompletedOnboarding = profileCheckData?.data?.currentUser?.profile?.onboarding_completed
-              console.log('Onboarding status check:', { hasCompletedOnboarding, profileCheckData })
-
-              // Only update profile if onboarding is not completed
-              if (!hasCompletedOnboarding) {
-                // Parse name - try given_name/family_name first, fallback to splitting "name" field
-                let firstName = googleUser.given_name
-                let lastName = googleUser.family_name
-
-                // If given_name or family_name is missing, split the "name" field
-                if (!firstName || !lastName) {
-                  if (googleUser.name) {
-                    const nameParts = googleUser.name.trim().split(' ')
-                    if (!firstName) firstName = nameParts[0] || ''
-                    if (!lastName) lastName = nameParts.slice(1).join(' ') || ''
-                  } else {
-                    firstName = firstName || ''
-                    lastName = lastName || ''
-                  }
-                }
-
-                // Only update if we actually have name data from Google
-                if (!firstName && !lastName) {
-                  console.log('No name data from Google, skipping profile update')
-                  navigate('/search', { replace: true })
-                  return
-                }
-
-                const profileInput = {
-                  first_name: firstName,
-                  last_name: lastName,
-                  profile_photo_url: googleUser.picture || '',
-                }
-                console.log('Google user data:', googleUser)
-                console.log('Creating/updating profile with:', profileInput)
-
-                const profileRes = await fetch(`${STRAPI_URL}/graphql`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${data.jwt}`,
-                  },
-                  body: JSON.stringify({
-                    query: `mutation UpdateMyProfile($input: UpdateProfileInput!) {
-                      updateMyProfile(input: $input) { profile { id first_name last_name } }
-                    }`,
-                    variables: {
-                      input: profileInput,
-                    },
-                  }),
-                })
-                const profileResult = await profileRes.json()
-                console.log('Profile update result:', profileResult)
-              } else {
-                console.log('Profile already completed, skipping Google data update')
-              }
-            } catch (profileError) {
-              console.error('Failed to update profile with Google data:', profileError)
-            }
-          }
-
-          navigate('/search', { replace: true })
-        } else {
+        if (!data.jwt) {
           throw new Error('No JWT received')
         }
+
+        setAuthToken(data.jwt)
+
+        // Sync name/photo from Google. Server-side, since the profile
+        // update GraphQL mutation deliberately can't set these fields
+        // (name is locked to the authenticated Google identity).
+        try {
+          await fetch(`${STRAPI_URL}/api/sync-google-profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: accessToken, jwt: data.jwt }),
+          })
+        } catch (syncError) {
+          console.error('Failed to sync Google profile data:', syncError)
+        }
+
+        navigate('/search', { replace: true })
       } catch (error) {
         console.error('Auth error:', error)
         navigate('/signin', { replace: true })
