@@ -38,6 +38,8 @@ export default (plugin: any) => {
               given_name?: string
               family_name?: string
             }
+            // TEMP DEBUG - remove once we've diagnosed the missing-name issue
+            console.log(`Google userinfo status=${googleResponse.status} body=${JSON.stringify(googleUser)}`)
             const pictureUrl = googleUser.picture
             const firstName = googleUser.given_name
             const lastName = googleUser.family_name
