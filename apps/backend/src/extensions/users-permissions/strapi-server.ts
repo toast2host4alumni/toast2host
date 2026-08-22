@@ -6,8 +6,12 @@ export default (plugin: any) => {
   const originalCallback = plugin.controllers.auth.callback
 
   plugin.controllers.auth.callback = async (ctx: any) => {
-    // Call original callback first
-    const response = await originalCallback(ctx)
+    // Call original callback first. Note: it responds via ctx.send(data),
+    // which does `this.body = data` and returns nothing - the controller's
+    // own return value is always undefined, so the response must be read
+    // back off ctx.body, not captured from this call's return value.
+    await originalCallback(ctx)
+    const response = ctx.body
 
     try {
       // Get the user from the response
@@ -38,8 +42,6 @@ export default (plugin: any) => {
               given_name?: string
               family_name?: string
             }
-            // TEMP DEBUG - remove once we've diagnosed the missing-name issue
-            console.log(`Google userinfo status=${googleResponse.status} body=${JSON.stringify(googleUser)}`)
             const pictureUrl = googleUser.picture
             const firstName = googleUser.given_name
             const lastName = googleUser.family_name
