@@ -13,6 +13,9 @@ export default (plugin: any) => {
     await originalCallback(ctx)
     const response = ctx.body
 
+    // TEMP DEBUG - remove once we've diagnosed why the sync isn't running
+    console.log(`DEBUG ctx.body=${JSON.stringify(response)} provider=${ctx.params?.provider}`)
+
     try {
       // Get the user from the response
       const userId = response?.user?.id
