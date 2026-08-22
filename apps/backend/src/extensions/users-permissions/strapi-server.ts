@@ -18,8 +18,12 @@ export default (plugin: any) => {
         const { provider } = ctx.params
 
         if (provider === 'google') {
-          // Get access token from the response or session
-          const accessToken = ctx.session?.grant?.response?.access_token
+          // Get access token from the query string. Note: ctx.session is
+          // unreliable here since the frontend and backend run on separate
+          // origins and this request is a fetch(), not a top-level
+          // navigation — SameSite=Lax session cookies from the earlier
+          // /api/connect/google/callback leg never arrive on this request.
+          const accessToken = ctx.query?.access_token || ctx.session?.grant?.response?.access_token
 
           if (accessToken) {
             // Fetch Google user info
